@@ -17,8 +17,10 @@ class ProofLineDraft {
 
 class ProofState {
   ProofState() {
-    _hand = _defaultHand();
+    _hand = _defaultHand().toList();
   }
+
+  static const int maxHandSize = 9;
 
   String? premise;
   final List<PlayCard> conclusionTokens = <PlayCard>[];
@@ -30,14 +32,24 @@ class ProofState {
   int blindScore = 0;
 
   bool editorOpen = false;
+  bool isFirstSubmissionInSession = true;
   String? lastValidationMessage;
   bool? lastValidationPassed;
   int? lastScoreDelta;
 
-  late final List<PlayCard> _hand;
+  late List<PlayCard> _hand;
   int _nextLineId = 1;
 
   List<PlayCard> get hand => _hand;
+
+  void refillHand() {
+    final defaultCards = _defaultHand();
+    int defaultIdx = 0;
+    while (_hand.length < maxHandSize) {
+      _hand.add(defaultCards[defaultIdx % defaultCards.length]);
+      defaultIdx++;
+    }
+  }
 
   String get conclusionText =>
       conclusionTokens.map((card) => card.content).join();
@@ -56,25 +68,32 @@ class ProofState {
 
     // Reset per-attempt editor UI.
     editorOpen = false;
+    isFirstSubmissionInSession = true;
     lastValidationMessage = null;
     lastValidationPassed = null;
     lastScoreDelta = null;
 
     _nextLineId = 1;
+    refillHand();
   }
 
   void addConclusionCard(PlayCard card) {
-    conclusionTokens.add(card);
+    if (_hand.contains(card)) {
+      _hand.remove(card);
+      conclusionTokens.add(card);
+    }
   }
 
   void removeLastConclusionCard() {
     if (conclusionTokens.isEmpty) {
       return;
     }
-    conclusionTokens.removeLast();
+    final card = conclusionTokens.removeLast();
+    _hand.add(card);
   }
 
   void clearConclusion() {
+    _hand.addAll(conclusionTokens);
     conclusionTokens.clear();
   }
 

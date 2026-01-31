@@ -45,9 +45,15 @@ class RunState extends ChangeNotifier {
   bool _cashoutPending = false;
 
   void advancePhase() {
+    final oldPhase = _phase;
     _phase = _nextPhase(_phase);
+
+    if (oldPhase == GamePhase.start && _phase == GamePhase.selectBlind) {
+      _shopState.seedDemoInventory();
+    }
+
     if (_phase == GamePhase.proof) {
-      _startBlind();
+      _startBlind(resetBlind: true);
     }
     if (_phase == GamePhase.cashout) {
       _cashoutPending = true;
@@ -83,14 +89,24 @@ class RunState extends ChangeNotifier {
   }
 
   void openProofEditor() {
-    if (_proofState.hasConclusion) {
+    if (_proofState.hasConclusion && _proofState.handsRemaining > 0) {
+      _proofState.handsRemaining--;
       _proofState.editorOpen = true;
+      _proofState.isFirstSubmissionInSession = true;
       notifyListeners();
     }
   }
 
   void closeProofEditor() {
     _proofState.editorOpen = false;
+    _proofState.refillHand();
+
+    if (_proofState.blindScore < _proofState.blindTargetScore &&
+        _proofState.handsRemaining <= 0) {
+      _phase = GamePhase.cashout;
+      _cashoutPending = true;
+    }
+
     notifyListeners();
   }
 
@@ -136,6 +152,18 @@ class RunState extends ChangeNotifier {
 
     final result = ProofValidator.validateProofPath(proofPath);
 
+    // If this is NOT the first submission in this editor session,
+    // we need to deduct another hand.
+    if (!_proofState.isFirstSubmissionInSession) {
+      if (_proofState.handsRemaining > 0) {
+        _proofState.handsRemaining--;
+      } else {
+        // This shouldn't happen if UI is disabled correctly,
+        // but as a safety:
+        return result;
+      }
+    }
+
     // Phase 3 settlement: valid / baseScore / fallbackScore.
     var delta = result.isValid
         ? ProofScoring.baseScore(proofPath)
@@ -162,18 +190,24 @@ class RunState extends ChangeNotifier {
       scoreDelta: delta,
     );
 
-    // Blind loop: clear -> Cashout, else consume a hand and keep playing.
+    // After the submission is processed, it's no longer the "first" submission.
+    _proofState.isFirstSubmissionInSession = false;
+
+    // Blind loop: clear -> Cashout, else check hands left.
     if (_proofState.blindScore >= _proofState.blindTargetScore) {
       _phase = GamePhase.cashout;
       _cashoutPending = true;
+      _proofState.editorOpen = false;
     } else {
-      _proofState.handsRemaining = (_proofState.handsRemaining - 1).clamp(0, 99);
       if (_proofState.handsRemaining <= 0) {
-        // TODO: handle fail state properly (lose/forced cashout). For now, exit.
+        // No hands left, forced cashout.
         _phase = GamePhase.cashout;
         _cashoutPending = true;
+        _proofState.editorOpen = false;
       } else {
-        // Decision 1A: Keep the same premise/conclusion; player can iterate in editor.
+        // Not enough score, but hands remain.
+        // Stay in editor for further modifications as per design doc.
+        // We do NOT call closeProofEditor() here.
       }
     }
 
@@ -189,9 +223,6 @@ class RunState extends ChangeNotifier {
     _proofState.blindTargetScore = 120;
     _proofState.handsRemaining = 3;
 
-    // Demo: seed shop inventory once per run start.
-    _shopState.seedDemoInventory();
-
     // Round-start triggers.
     final patch = _effectEngine.computePatch(
       cards: _shopState.owned,
@@ -205,6 +236,13 @@ class RunState extends ChangeNotifier {
     _proofState.handsRemaining += patch.addHands;
 
     _proofState.startNewTask();
+  }
+
+  void buyCard(dynamic card) {
+    if (_shopState.canBuy(card)) {
+      _shopState.buy(card);
+      notifyListeners();
+    }
   }
 
   /// Apply cashout rewards once, then proceed to Shop.
