@@ -75,5 +75,6 @@ flutter run -d chrome
 - `design_doc/1. Overview.md`
 - `design_doc/2. Architecture.md`
 - `design_doc/2.1_phase_flow.md`
+- `design_doc/2.2_proof_core.md`
 
 (We keep the doc naming style aligned with the existing `cruising` repo.)
