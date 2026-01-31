@@ -1,16 +1,19 @@
 # boolatro
 
-A new Flutter project.
+Phase 1 prototype for a cruising-style run loop with a simple phase state machine.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+- Install Flutter (stable) and run `flutter pub get`
+- Launch the app with `flutter run`
 
-A few resources to get you started if this is your first Flutter project:
+## Phase 1 Notes
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- `RunState` is a `ChangeNotifier` that tracks the current phase and the tick loop.
+- `GameScreen` owns a Ticker-based loop and renders minimal overlays for Start,
+  SelectBlind, Proof, Cashout, and Shop.
+- Phase flow: Start -> SelectBlind -> Proof -> Cashout -> Shop -> SelectBlind
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Tests
+
+Run `flutter test`.
