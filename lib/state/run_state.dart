@@ -37,7 +37,9 @@ class RunState extends ChangeNotifier {
   void tick(double dtSeconds) {
     _lastDtSeconds = dtSeconds;
     _elapsedSeconds += dtSeconds;
-    notifyListeners();
+
+    // We intentionally do NOT notifyListeners() every frame.
+    // Phase logic and UI should be driven by discrete state changes.
   }
 
   bool _cashoutPending = false;

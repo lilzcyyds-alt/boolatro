@@ -7,7 +7,10 @@ void main() {
 }
 
 class BoolatroApp extends StatelessWidget {
-  const BoolatroApp({super.key});
+  const BoolatroApp({super.key, this.enableTicker = true});
+
+  /// Disable the ticker in widget tests so `pumpAndSettle()` can terminate.
+  final bool enableTicker;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +20,7 @@ class BoolatroApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      home: const GameScreen(),
+      home: GameScreen(enableTicker: enableTicker),
     );
   }
 }

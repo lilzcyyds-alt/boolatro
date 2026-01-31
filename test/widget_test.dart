@@ -4,9 +4,9 @@ import 'package:boolatro/main.dart';
 
 void main() {
   testWidgets('Game screen shows start phase', (WidgetTester tester) async {
-    await tester.pumpWidget(const BoolatroApp());
+    await tester.pumpWidget(const BoolatroApp(enableTicker: false));
 
-    expect(find.text('Start'), findsOneWidget);
+    expect(find.text('START'), findsOneWidget);
     expect(find.text('Begin Run'), findsOneWidget);
   });
 }
