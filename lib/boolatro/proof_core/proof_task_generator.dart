@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import '../../game/game_config.dart';
 import 'proof_validator.dart';
 
 /// Task difficulty tiers based on the grading system.
@@ -24,7 +25,7 @@ enum FormulaType {
 /// Proof task generator with structured difficulty system.
 class ProofTaskGenerator {
 
-  static const List<String> _atoms = ['P', 'Q', 'R', 'S', 'T'];
+  static List<String> get _atoms => GameConfig.allowedAtoms;
 
   static final Random _rng = Random();
 

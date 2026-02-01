@@ -1,11 +1,12 @@
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import '../state/run_state.dart';
 import 'components/root_layout.dart';
 import 'components/logic_card.dart';
 
-class BoolatroGame extends FlameGame {
+class BoolatroGame extends FlameGame with TapCallbacks, DragCallbacks {
   final RunState runState;
 
   BoolatroGame({required this.runState})

@@ -1,0 +1,26 @@
+[
+    {
+        "id": "small_blind",
+        "name": "Small Blind",
+        "category": "small blind",
+        "targetScore": 120,
+        "reward": 3,
+        "premise": "P & Q"
+    },
+    {
+        "id": "big_blind",
+        "name": "Big Blind",
+        "category": "big blind",
+        "targetScore": 150,
+        "reward": 3,
+        "premise": "P & (Q & R)"
+    },
+    {
+        "id": "boss_blind",
+        "name": "Boss Blind",
+        "category": "boss blind",
+        "targetScore": 300,
+        "reward": 5,
+        "premise": "P & Q"
+    }
+]

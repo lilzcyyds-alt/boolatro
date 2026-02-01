@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-
+import 'game/game_config.dart';
 import 'screens/game_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await GameConfig.load();
   runApp(const BoolatroApp());
 }
 

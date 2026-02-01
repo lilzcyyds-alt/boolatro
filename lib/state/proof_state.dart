@@ -2,6 +2,7 @@ import 'dart:math';
 
 import '../boolatro/proof_core/play_card.dart';
 import '../boolatro/proof_core/proof_task_generator.dart';
+import '../game/game_config.dart';
 
 enum EditorStep {
   idle,
@@ -31,17 +32,17 @@ class ProofState {
     refillHand();
   }
 
-  static const int maxHandSize = 6;
+  static int get maxHandSize => GameConfig.maxHandSize;
 
   String? premise;
   final List<PlayCard> conclusionTokens = <PlayCard>[];
   final List<ProofLineDraft> proofLines = <ProofLineDraft>[];
 
   /// Blind loop state (Phase 3).
-  int handsRemaining = 3;
+  int handsRemaining = GameConfig.initialHands;
   int blindTargetScore = 120;
   int blindScore = 0;
-  int discardsRemaining = 3;
+  int discardsRemaining = GameConfig.initialDiscards;
 
   bool editorOpen = false;
   bool isFirstSubmissionInSession = true;
@@ -67,6 +68,13 @@ class ProofState {
     if (currentTotal < maxHandSize) {
       _drawCards(maxHandSize - currentTotal);
     }
+  }
+
+  void resetToGlobalDefaults({int ante = 1}) {
+    // Basic scaling: 120 * 1.5 ^ (ante - 1)
+    blindTargetScore = (120 * pow(1.5, ante - 1)).round();
+    handsRemaining = GameConfig.initialHands;
+    discardsRemaining = GameConfig.initialDiscards;
   }
 
   void discardHand() {
@@ -99,10 +107,16 @@ class ProofState {
   void startNewTask({
     CircuitLevel circuitLevel = CircuitLevel.one,
     Difficulty difficulty = Difficulty.small,
+    String? premise,
   }) {
-    final (premiseSentence, _) =
-        ProofTaskGenerator.generateTask(circuitLevel, difficulty);
-    premise = premiseSentence;
+    if (premise != null) {
+      this.premise = premise;
+      conclusionTokens.clear();
+    } else {
+      final (premiseSentence, _) =
+          ProofTaskGenerator.generateTask(circuitLevel, difficulty);
+      this.premise = premiseSentence;
+    }
     conclusionTokens.clear();
     proofLines.clear();
 
@@ -216,16 +230,21 @@ class ProofState {
   }
 
   static List<PlayCard> _defaultHandTemplates() {
-    return <PlayCard>[
-      PlayCard(id: 0, content: 'P', type: CardType.atom),
-      PlayCard(id: 0, content: 'Q', type: CardType.atom),
-      PlayCard(id: 0, content: 'R', type: CardType.atom),
-      PlayCard(id: 0, content: 'S', type: CardType.atom),
-      PlayCard(id: 0, content: 'T', type: CardType.atom),
+    final templates = <PlayCard>[];
+    
+    // Add atoms from config
+    for (final atom in GameConfig.allowedAtoms) {
+      templates.add(PlayCard(id: 0, content: atom, type: CardType.atom));
+    }
+    
+    // Add connectives
+    templates.addAll([
       PlayCard(id: 0, content: '~', type: CardType.connective),
       PlayCard(id: 0, content: '&', type: CardType.connective),
       PlayCard(id: 0, content: '(', type: CardType.connective),
       PlayCard(id: 0, content: ')', type: CardType.connective),
-    ];
+    ]);
+    
+    return templates;
   }
 }

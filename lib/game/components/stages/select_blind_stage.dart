@@ -1,14 +1,15 @@
+import 'dart:math';
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, PaintingStyle, TextStyle, FontWeight;
 import '../../boolatro_component.dart';
 import '../../styles.dart';
-// import '../../../state/run_state.dart';
+import '../../systems/blind_system.dart';
 
 class SelectBlindStageComponent extends BoolatroComponent {
   late final TextComponent titleText;
-  late final BlindCardComponent blindCard;
+  final List<BlindCardComponent> blindCards = [];
 
   @override
   Future<void> onLoad() async {
@@ -18,16 +19,34 @@ class SelectBlindStageComponent extends BoolatroComponent {
       anchor: Anchor.center,
     ));
 
-    final cardWidth = 200.0;
-    final cardHeight = 300.0;
+    final blinds = BlindSystem.blinds;
+    for (var i = 0; i < blinds.length; i++) {
+      final card = BlindCardComponent(
+        config: blinds[i],
+        onSelect: () => runState.advancePhase(),
+        onSkip: () => runState.skipBlind(),
+      )
+        ..size = Vector2(300, 450)
+        ..anchor = Anchor.center;
+      
+      blindCards.add(card);
+      add(card);
+    }
 
-    add(blindCard = BlindCardComponent(
-      onPressed: () => runState.advancePhase(),
-    )
-      ..size = Vector2(cardWidth, cardHeight)
-      ..anchor = Anchor.center);
-    
     _layout();
+  }
+
+  @override
+  void onMount() {
+    super.onMount();
+    runState.addListener(onStateChanged);
+    onStateChanged();
+  }
+
+  @override
+  void onRemove() {
+    runState.removeListener(onStateChanged);
+    super.onRemove();
   }
 
   @override
@@ -37,34 +56,139 @@ class SelectBlindStageComponent extends BoolatroComponent {
   }
 
   void _layout() {
+    titleText.text = 'ANTE ${runState.currentAnte} - SELECT BLIND';
     titleText.position = Vector2(size.x / 2, 60);
-    blindCard.position = Vector2(size.x / 2, size.y / 2 + 20);
+
+    final currentIndex = runState.currentBlindIndex;
+    final cardWidth = 300.0;
+    final spacing = 40.0;
+    final totalWidth = (blindCards.length * cardWidth) + ((blindCards.length - 1) * spacing);
+    var startX = (size.x - totalWidth) / 2 + (cardWidth / 2);
+
+    for (var i = 0; i < blindCards.length; i++) {
+      final card = blindCards[i];
+      double targetY;
+      
+      if (i < currentIndex) {
+        // Skipped
+        targetY = size.y / 2 + 150;
+        card.opacity = 0.5;
+        card.isActive = false;
+      } else if (i == currentIndex) {
+        // Current
+        targetY = size.y / 2 - 80;
+        card.opacity = 1.0;
+        card.isActive = true;
+      } else {
+        // Pending
+        targetY = size.y / 2 + 100;
+        card.opacity = 0.7;
+        card.isActive = false;
+      }
+
+      card.position = Vector2(startX + i * (cardWidth + spacing), targetY);
+    }
   }
 }
 
-class BlindCardComponent extends BoolatroComponent with TapCallbacks {
-  final VoidCallback onPressed;
+class BlindCardComponent extends BoolatroComponent {
+  final BlindConfig config;
+  final VoidCallback onSelect;
+  final VoidCallback onSkip;
+  
+  double opacity = 1.0;
+  bool _isActive = false;
+  
+  set isActive(bool value) {
+    if (_isActive == value) return;
+    _isActive = value;
+    _updateButtonVisibility();
+  }
+  
+  bool get isActive => _isActive;
 
-  BlindCardComponent({required this.onPressed});
+  late final BlindActionButton selectButton;
+  late final BlindActionButton skipButton;
+
+  BlindCardComponent({
+    required this.config, 
+    required this.onSelect,
+    required this.onSkip,
+  });
 
   @override
-  void onTapDown(TapDownEvent event) {
-    if (!isVisible) return;
+  Future<void> onLoad() async {
+    add(selectButton = BlindActionButton(
+      label: 'SELECT',
+      color: Colors.white,
+      textColor: Colors.black,
+      onPressed: () {
+        runState.selectBlind(config);
+        onSelect();
+      },
+    )
+      ..size = Vector2(220, 60)
+      ..anchor = Anchor.center
+      ..isVisible = isActive);
+
+    add(skipButton = BlindActionButton(
+      label: 'SKIP BLIND',
+      color: Colors.orange.shade900,
+      textColor: Colors.white,
+      onPressed: () {
+        print('[BlindCardComponent] Skip button pressed for: ${config.name}');
+        onSkip();
+      },
+    )
+      ..size = Vector2(220, 60)
+      ..anchor = Anchor.center
+      ..isVisible = isActive && config.category != 'boss blind');
+
+    _layoutButtons();
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    if (!isEffectivelyVisible) return false;
     
-    // Only trigger if clicking within the button area
-    final buttonRect = Rect.fromCenter(
-      center: Offset(size.x / 2, size.y - 40),
-      width: 140,
-      height: 40,
-    );
-    
-    if (buttonRect.contains(event.localPosition.toOffset())) {
-      onPressed();
+    // Check buttons first
+    if (isActive) {
+      if (selectButton.isVisible && selectButton.containsLocalPoint(point - selectButton.position)) {
+        return true;
+      }
+      if (skipButton.isVisible && skipButton.containsLocalPoint(point - skipButton.position)) {
+        return true;
+      }
+      
+      // Expand hit area to include buttons
+      final expandedRect = Rect.fromLTWH(0, 0, size.x, size.y + 180);
+      return expandedRect.contains(point.toOffset());
     }
+    
+    return super.containsLocalPoint(point);
+  }
+
+  void _updateButtonVisibility() {
+    try {
+      selectButton.isVisible = isActive;
+      skipButton.isVisible = isActive && config.category != 'boss blind';
+    } catch (_) {
+      // Buttons might not be initialized yet
+    }
+  }
+
+  void _layoutButtons() {
+    selectButton.position = Vector2(size.x / 2, size.y + 60);
+    skipButton.position = Vector2(size.x / 2, size.y + 130);
   }
 
   @override
   void render(Canvas canvas) {
+    canvas.save();
+    if (opacity < 1.0) {
+      canvas.saveLayer(size.toRect(), Paint()..color = Colors.white.withOpacity(opacity));
+    }
+
     final rect = RRect.fromRectAndRadius(
       size.toRect(),
       const Radius.circular(16),
@@ -76,39 +200,126 @@ class BlindCardComponent extends BoolatroComponent with TapCallbacks {
       Paint()..color = Colors.black.withOpacity(0.5),
     );
 
-    // Card background
-    canvas.drawRRect(rect, Paint()..color = Colors.blue.shade900);
+    // Card background - change color based on blind category
+    Color bgColor;
+    switch (config.category) {
+      case 'boss blind':
+        bgColor = Colors.red.shade900;
+        break;
+      case 'big blind':
+        bgColor = Colors.orange.shade900;
+        break;
+      default:
+        bgColor = Colors.blue.shade900;
+    }
+    
+    if (!isActive) {
+      bgColor = Color.alphaBlend(Colors.black.withOpacity(0.3), bgColor);
+    }
+
+    canvas.drawRRect(rect, Paint()..color = bgColor);
     
     // Border
     canvas.drawRRect(rect, Paint()
-      ..color = Colors.white
+      ..color = isActive ? Colors.white : Colors.white60
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4);
     
-    // Title
-    GameStyles.valueSmall.render(
+    // Category Name (Small/Big/Boss)
+    GameStyles.label.render(
       canvas,
-      'SMALL BLIND',
-      Vector2(size.x / 2, size.y / 2 - 40),
+      config.category.toUpperCase(),
+      Vector2(size.x / 2, 40),
       anchor: Anchor.center,
     );
 
-    // Reward
-    GameStyles.label.render(
+    // Title
+    GameStyles.valueSmall.render(
       canvas,
-      'Reward: \$3',
+      config.name.toUpperCase(),
+      Vector2(size.x / 2, size.y / 2 - 60),
+      anchor: Anchor.center,
+    );
+
+    // Calculate scaled target score for display
+    final scaledScore = (config.targetScore * pow(1.5, runState.currentAnte - 1)).round();
+
+    // Target Score
+    GameStyles.title.render(
+      canvas,
+      '$scaledScore',
       Vector2(size.x / 2, size.y / 2 + 10),
       anchor: Anchor.center,
     );
 
-    // "Lock Blind" button appearance
-    final btnRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(size.x / 2, size.y - 40), width: 140, height: 40),
-      const Radius.circular(4),
+    GameStyles.label.render(
+      canvas,
+      'SCORE TO BEAT',
+      Vector2(size.x / 2, size.y / 2 + 60),
+      anchor: Anchor.center,
     );
-    canvas.drawRRect(btnRect, Paint()..color = Colors.white);
+
+    // Reward
+    GameStyles.valueSmall.render(
+      canvas,
+      'Reward: \$${config.reward}',
+      Vector2(size.x / 2, size.y / 2 + 110),
+      anchor: Anchor.center,
+    );
+
+    if (opacity < 1.0) {
+      canvas.restore();
+    }
+    canvas.restore();
+  }
+}
+
+class BlindActionButton extends BoolatroComponent with TapCallbacks {
+  final String label;
+  final Color color;
+  final Color textColor;
+  final VoidCallback onPressed;
+
+  BlindActionButton({
+    required this.label,
+    required this.color,
+    required this.textColor,
+    required this.onPressed,
+  });
+
+  @override
+  void render(Canvas canvas) {
+    if (!isVisible) return;
+
+    final rect = RRect.fromRectAndRadius(size.toRect(), const Radius.circular(8));
     
-    final textPaint = TextPaint(style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 14));
-    textPaint.render(canvas, 'LOCK BLIND', Vector2(size.x / 2, size.y - 40), anchor: Anchor.center);
+    // Shadow
+    canvas.drawRRect(rect.shift(const Offset(2, 2)), Paint()..color = Colors.black45);
+    
+    canvas.drawRRect(rect, Paint()..color = color);
+    canvas.drawRRect(rect, Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2);
+
+    final textPaint = TextPaint(style: TextStyle(
+      color: textColor, 
+      fontWeight: FontWeight.bold, 
+      fontSize: 20,
+    ));
+    
+    textPaint.render(
+      canvas,
+      label,
+      Vector2(size.x / 2, size.y / 2),
+      anchor: Anchor.center,
+    );
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    if (!isEffectivelyVisible) return;
+    print('[BlindActionButton] Tapped: $label');
+    onPressed();
   }
 }

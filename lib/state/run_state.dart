@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import '../boolatro/proof_core/play_card.dart';
@@ -9,6 +10,8 @@ import '../boolatro/effects/effect_engine.dart';
 import '../boolatro/effects/effect_trigger.dart';
 import '../boolatro/proof_core/proof_scoring.dart';
 import '../boolatro/proof_core/proof_validator.dart';
+import '../game/game_config.dart';
+import '../game/systems/blind_system.dart';
 import 'proof_state.dart';
 import 'shop_state.dart';
 
@@ -29,11 +32,20 @@ class RunState extends ChangeNotifier {
   final ShopState _shopState = ShopState();
   final EffectEngine _effectEngine = const EffectEngine();
 
+  int _currentAnte = 1;
+  int _currentBlindIndex = 0; // 0: Small, 1: Big, 2: Boss
+
+  int get currentAnte => _currentAnte;
+  int get currentBlindIndex => _currentBlindIndex;
+
   GamePhase get phase => _phase;
   double get elapsedSeconds => _elapsedSeconds;
   double get lastDtSeconds => _lastDtSeconds;
   ProofState get proofState => _proofState;
   ShopState get shopState => _shopState;
+
+  BlindConfig? _currentBlind;
+  BlindConfig? get currentBlind => _currentBlind;
 
   void tick(double dtSeconds) {
     _lastDtSeconds = dtSeconds;
@@ -54,7 +66,7 @@ class RunState extends ChangeNotifier {
     }
 
     if (_phase == GamePhase.proof) {
-      _startBlind(resetBlind: true);
+      _startBlind(resetBlind: true, config: _currentBlind);
     }
     if (_phase == GamePhase.cashout) {
       _cashoutPending = true;
@@ -66,12 +78,27 @@ class RunState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void selectBlind(BlindConfig config) {
+    _currentBlind = config;
+    notifyListeners();
+  }
+
+  void skipBlind() {
+    if (_currentBlindIndex < 2) {
+      _currentBlindIndex++;
+      notifyListeners();
+    }
+  }
+
   void reset() {
     _phase = GamePhase.start;
     _elapsedSeconds = 0;
     _lastDtSeconds = 0;
-    _shopState.money = 0; // Reset money on game over/restart
+    _shopState.money = GameConfig.initialMoney; // Reset money on game over/restart
     _shopState.owned.clear();
+    _currentBlind = null;
+    _currentAnte = 1;
+    _currentBlindIndex = 0;
     _startBlind(resetBlind: true);
     notifyListeners();
   }
@@ -351,6 +378,15 @@ class RunState extends ChangeNotifier {
       _phase = GamePhase.cashout;
       _cashoutPending = true;
       _proofState.editorOpen = false;
+
+      // Logic for advancing sequence
+      if (_currentBlindIndex == 2) {
+        // Boss defeated
+        _currentAnte++;
+        _currentBlindIndex = 0;
+      } else {
+        _currentBlindIndex++;
+      }
     } else {
       if (_proofState.handsRemaining <= 0) {
         // No hands left, defeat.
@@ -367,14 +403,26 @@ class RunState extends ChangeNotifier {
     return result;
   }
 
-  void _startBlind({bool resetBlind = false}) {
-    // TODO: move blind config to SelectBlind + difficulty. For now: fixed.
+  void _startBlind({bool resetBlind = false, BlindConfig? config}) {
     if (resetBlind) {
       _proofState.blindScore = 0;
     }
-    _proofState.blindTargetScore = 120;
-    _proofState.handsRemaining = 3;
-    _proofState.discardsRemaining = 3;
+
+    if (config != null) {
+      _currentBlind = config;
+      // Scale target score by ante
+      _proofState.blindTargetScore = (config.targetScore * pow(1.5, _currentAnte - 1)).round();
+      _proofState.handsRemaining = GameConfig.initialHands;
+      _proofState.discardsRemaining = GameConfig.initialDiscards;
+      
+      _proofState.startNewTask(
+        premise: config.premise,
+      );
+    } else {
+      // Fallback or generator
+      _proofState.resetToGlobalDefaults(ante: _currentAnte);
+      _proofState.startNewTask();
+    }
 
     // Round-start triggers.
     final patch = _effectEngine.computePatch(
@@ -404,9 +452,8 @@ class RunState extends ChangeNotifier {
       return;
     }
     if (_cashoutPending) {
-      // TODO: replace with full cashout system.
-      // For now: convert blindScore to money at a simple rate.
-      _shopState.money += (_proofState.blindScore / 10).floor();
+      // Use the reward from the current blind configuration
+      _shopState.money += _currentBlind?.reward ?? 0;
       _cashoutPending = false;
     }
     _phase = GamePhase.shop;
@@ -424,6 +471,9 @@ class RunState extends ChangeNotifier {
       case GamePhase.cashout:
         return GamePhase.shop;
       case GamePhase.shop:
+        if (_currentAnte > 8) {
+          return GamePhase.start; // Win condition - could be a separate Victory phase
+        }
         return GamePhase.selectBlind;
       case GamePhase.defeat:
         return GamePhase.start;

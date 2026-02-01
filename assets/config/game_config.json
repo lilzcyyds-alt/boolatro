@@ -1,0 +1,15 @@
+{
+    "gameplay": {
+        "maxHandSize": 6,
+        "initialMoney": 0,
+        "initialHands": 3,
+        "initialDiscards": 3,
+        "allowedAtoms": [
+            "P",
+            "Q",
+            "R",
+            "S",
+            "T"
+        ]
+    }
+}

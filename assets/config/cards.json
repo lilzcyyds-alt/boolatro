@@ -1,0 +1,26 @@
+[
+    {
+        "id": "partner_card_1",
+        "name": "Partner",
+        "imagePath": "assets/images/cards/partner.png",
+        "abilityDescription": "Provides bonus score for correct proofs.",
+        "category": "partner",
+        "cost": 4
+    },
+    {
+        "id": "alchemy_card_1",
+        "name": "Alchemy",
+        "imagePath": "assets/images/cards/alchemy.png",
+        "abilityDescription": "Boosts money gain from blinds.",
+        "category": "atomic",
+        "cost": 6
+    },
+    {
+        "id": "extra_hand_card_1",
+        "name": "Extra Hand",
+        "imagePath": "assets/images/cards/extra_hand.png",
+        "abilityDescription": "Grants 1 extra hand per round.",
+        "category": "partner",
+        "cost": 5
+    }
+]
