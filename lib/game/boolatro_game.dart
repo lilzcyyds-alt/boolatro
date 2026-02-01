@@ -3,6 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../state/run_state.dart';
 import 'components/root_layout.dart';
+import 'components/logic_card.dart';
 
 class BoolatroGame extends FlameGame {
   final RunState runState;
@@ -18,9 +19,12 @@ class BoolatroGame extends FlameGame {
   @override
   Color backgroundColor() => const Color(0xFF1A1A1A);
 
+  late final RootLayoutComponent rootLayout;
+
   @override
   Future<void> onLoad() async {
-    final rootLayout = RootLayoutComponent()..size = Vector2(1920, 1080);
+    LogicCardComponent.clearCache();
+    rootLayout = RootLayoutComponent()..size = Vector2(1920, 1080);
     world.add(rootLayout);
   }
 

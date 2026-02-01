@@ -1,15 +1,18 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, PaintingStyle;
 import '../../boolatro_component.dart';
 import '../../styles.dart';
 import '../hand.dart';
+import '../logic_card.dart';
 
 class ProofStageComponent extends BoolatroComponent {
   late final TextComponent premiseLabel;
   late final TextComponent premiseText;
   late final TextComponent conclusionLabel;
-  final Map<int, LogicCardComponent> _conclusionCardMap = {};
+  final Map<int, LogicCardComponent> cardMap = {};
+  final Set<int> _discardingIds = {};
 
   void handleCardDroppedBack(LogicCardComponent cardComp) {
     final localPos = cardComp.position;
@@ -78,14 +81,29 @@ class ProofStageComponent extends BoolatroComponent {
     final tokens = proof.conclusionTokens;
     
     // Manage components
-    final currentIds = tokens.map((t) => t.hashCode).toSet();
-    _conclusionCardMap.removeWhere((id, comp) {
-      if (!currentIds.contains(id)) {
-        remove(comp);
-        return true;
+    final currentIds = tokens.map((t) => t.id).toSet();
+    
+    for (final id in cardMap.keys.toList()) {
+      if (!currentIds.contains(id) && !_discardingIds.contains(id)) {
+        final comp = cardMap[id]!;
+        
+        // Skip off-screen flyout if it's moving back to hand
+        final inHand = runState.proofState.hand.any((c) => c.id == id);
+        if (inHand) {
+          cardMap.remove(id);
+          remove(comp);
+          continue;
+        }
+
+        _discardingIds.add(id);
+        
+        comp.flyTo(LogicCardComponent.getRandomOffscreenPosition(size), duration: 0.6).then((_) {
+          cardMap.remove(id);
+          _discardingIds.remove(id);
+          remove(comp);
+        });
       }
-      return false;
-    });
+    }
 
     if (tokens.isEmpty) return;
 
@@ -98,20 +116,28 @@ class ProofStageComponent extends BoolatroComponent {
 
     for (int i = 0; i < tokens.length; i++) {
       final token = tokens[i];
-      final id = token.hashCode;
+      final id = token.id;
       final targetPos = Vector2(startX + i * step, 250);
 
-      var cardComp = _conclusionCardMap[id];
+      var cardComp = cardMap[id];
       if (cardComp == null) {
         cardComp = LogicCardComponent(
           card: token,
           onPressed: () => runState.removeConclusionCardAt(i),
         )
           ..size = Vector2(cardWidth, cardHeight)
-          ..anchor = Anchor.center
-          ..position = targetPos;
+          ..anchor = Anchor.center;
+
+        // Use Global Registry for inheritance
+        final cachedPos = LogicCardComponent.getCachedPosition(id);
+        if (cachedPos != null) {
+          cardComp.position = cachedPos - absolutePosition;
+        } else {
+          cardComp.position = LogicCardComponent.getRandomOffscreenPosition(size);
+        }
+
         add(cardComp);
-        _conclusionCardMap[id] = cardComp;
+        cardMap[id] = cardComp;
       }
 
       cardComp.isVisible = true;

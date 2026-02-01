@@ -8,6 +8,7 @@ import '../../state/run_state.dart';
 
 class ActionPanelComponent extends BoolatroComponent {
   late final GameButton editButton;
+  late final GameButton discardButton;
   late final GameButton backspaceButton;
   late final GameButton clearButton;
 
@@ -15,15 +16,24 @@ class ActionPanelComponent extends BoolatroComponent {
   Future<void> onLoad() async {
     const buttonWidth = 180.0;
     const buttonHeight = 60.0;
-    const spacing = 24.0;
+    const spacing = 16.0;
 
     add(editButton = GameButton(
       label: 'EDIT PROOF',
-      color: GameStyles.money, // Using money color for edit
+      color: GameStyles.money, 
       onPressed: () => runState.openProofEditor(),
     )
       ..size = Vector2(buttonWidth, buttonHeight)
-      ..position = Vector2(size.x / 2, size.y / 2 - buttonHeight - spacing)
+      ..position = Vector2(size.x / 2, size.y / 2 - buttonHeight * 1.5 - spacing * 1.5)
+      ..anchor = Anchor.center);
+
+    add(discardButton = GameButton(
+      label: 'DISCARD',
+      color: GameStyles.discards,
+      onPressed: () => runState.discardHand(),
+    )
+      ..size = Vector2(buttonWidth, buttonHeight)
+      ..position = Vector2(size.x / 2, size.y / 2 - buttonHeight * 0.5 - spacing * 0.5)
       ..anchor = Anchor.center);
 
     add(backspaceButton = GameButton(
@@ -32,16 +42,16 @@ class ActionPanelComponent extends BoolatroComponent {
       onPressed: () => runState.removeLastConclusionCard(),
     )
       ..size = Vector2(buttonWidth, buttonHeight)
-      ..position = Vector2(size.x / 2, size.y / 2)
+      ..position = Vector2(size.x / 2, size.y / 2 + buttonHeight * 0.5 + spacing * 0.5)
       ..anchor = Anchor.center);
 
     add(clearButton = GameButton(
       label: 'CLEAR',
-      color: GameStyles.discards, // Using discard color for clear
+      color: GameStyles.discards.withOpacity(0.5),
       onPressed: () => runState.clearConclusion(),
     )
       ..size = Vector2(buttonWidth, buttonHeight)
-      ..position = Vector2(size.x / 2, size.y / 2 + buttonHeight + spacing)
+      ..position = Vector2(size.x / 2, size.y / 2 + buttonHeight * 1.5 + spacing * 1.5)
       ..anchor = Anchor.center);
 
     onStateChanged();
@@ -62,10 +72,12 @@ class ActionPanelComponent extends BoolatroComponent {
     final proof = runState.proofState;
 
     editButton.isEnabled = isProofPhase && proof.hasConclusion && proof.handsRemaining > 0;
+    discardButton.isEnabled = isProofPhase && proof.discardsRemaining > 0;
     backspaceButton.isEnabled = isProofPhase && proof.hasConclusion;
     clearButton.isEnabled = isProofPhase && proof.hasConclusion;
     
     editButton.isVisible = isProofPhase;
+    discardButton.isVisible = isProofPhase;
     backspaceButton.isVisible = isProofPhase;
     clearButton.isVisible = isProofPhase;
   }

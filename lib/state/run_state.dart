@@ -108,6 +108,12 @@ class RunState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void discardHand() {
+    if (_proofState.editorOpen) return;
+    _proofState.discardHand();
+    notifyListeners();
+  }
+
   void openProofEditor() {
     if (_proofState.hasConclusion && _proofState.handsRemaining > 0) {
       _proofState.handsRemaining--;
@@ -127,6 +133,7 @@ class RunState extends ChangeNotifier {
 
   void closeProofEditor() {
     _proofState.editorOpen = false;
+    _proofState.conclusionTokens.clear(); // Clear the cards used in the conclusion
     _proofState.refillHand();
     _proofState.step = EditorStep.idle;
     _proofState.activeLineId = null;
@@ -366,6 +373,7 @@ class RunState extends ChangeNotifier {
     }
     _proofState.blindTargetScore = 120;
     _proofState.handsRemaining = 3;
+    _proofState.discardsRemaining = 3;
 
     // Round-start triggers.
     final patch = _effectEngine.computePatch(

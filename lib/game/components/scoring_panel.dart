@@ -9,45 +9,16 @@ class ScoringPanelComponent extends BoolatroComponent {
   late final TextComponent moneyText;
   late final TextComponent scoreText;
   late final TextComponent targetText;
-  late final TextComponent handsText;
-  late final TextComponent discardsText;
+  late final TextComponent handsValue;
+  late final TextComponent discardValue;
 
   @override
   Future<void> onLoad() async {
-    add(moneyText = TextComponent(
-      text: '\$0',
-      textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2 + 95, 60),
-      anchor: Anchor.centerRight,
-    ));
-
-    add(scoreText = TextComponent(
-      text: '0',
-      textRenderer: GameStyles.valueLarge,
-      position: Vector2(size.x / 2, 205),
-      anchor: Anchor.center,
-    ));
-
-    add(targetText = TextComponent(
-      text: 'Target: 0',
-      textRenderer: GameStyles.label,
-      position: Vector2(size.x / 2, 245),
-      anchor: Anchor.center,
-    ));
-
-    add(handsText = TextComponent(
-      text: '0',
-      textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2 + 95, 340),
-      anchor: Anchor.centerRight,
-    ));
-
-    add(discardsText = TextComponent(
-      text: '0',
-      textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2 + 95, 410),
-      anchor: Anchor.centerRight,
-    ));
+    add(moneyText = TextComponent(text: '\$0', textRenderer: GameStyles.valueSmall, anchor: Anchor.centerRight));
+    add(scoreText = TextComponent(text: '0', textRenderer: GameStyles.valueLarge, anchor: Anchor.center));
+    add(targetText = TextComponent(text: 'Target: 0', textRenderer: GameStyles.label, anchor: Anchor.center));
+    add(handsValue = TextComponent(text: '0', textRenderer: GameStyles.valueSmall, anchor: Anchor.centerRight));
+    add(discardValue = TextComponent(text: '0', textRenderer: GameStyles.valueSmall, anchor: Anchor.centerRight));
 
     onStateChanged();
   }
@@ -104,6 +75,14 @@ class ScoringPanelComponent extends BoolatroComponent {
     labelPainter.render(canvas, label, Vector2(center.dx - 90, center.dy), anchor: Anchor.centerLeft);
   }
 
+  void _layout() {
+    moneyText.position = Vector2(size.x / 2 + 95, 60);
+    scoreText.position = Vector2(size.x / 2, 205);
+    targetText.position = Vector2(size.x / 2, 245);
+    handsValue.position = Vector2(size.x / 2 + 95, 340);
+    discardValue.position = Vector2(size.x / 2 + 95, 410);
+  }
+
   @override
   void onStateChanged() {
     if (!isLoaded || !isVisible || runState.phase == GamePhase.start) return;
@@ -114,7 +93,9 @@ class ScoringPanelComponent extends BoolatroComponent {
     moneyText.text = '\$${shop.money}';
     scoreText.text = '${proof.blindScore}';
     targetText.text = 'Target: ${proof.blindTargetScore}';
-    handsText.text = '${proof.handsRemaining}';
-    discardsText.text = '0';
+    handsValue.text = proof.handsRemaining.toString();
+    discardValue.text = proof.discardsRemaining.toString();
+
+    _layout();
   }
 }

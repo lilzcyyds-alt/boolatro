@@ -14,6 +14,10 @@ class StageComponent extends BoolatroComponent {
   BoolatroComponent? _currentStage;
   GamePhase? _lastPhase;
 
+  T getStage<T extends BoolatroComponent>(GamePhase phase) {
+    return _stageCache[phase] as T;
+  }
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../boolatro/proof_core/play_card.dart';
 import '../boolatro/proof_core/proof_task_generator.dart';
 
@@ -25,10 +27,11 @@ class ProofLineDraft {
 
 class ProofState {
   ProofState() {
-    _hand = _defaultHand().toList();
+    _hand = [];
+    refillHand();
   }
 
-  static const int maxHandSize = 9;
+  static const int maxHandSize = 6;
 
   String? premise;
   final List<PlayCard> conclusionTokens = <PlayCard>[];
@@ -38,6 +41,7 @@ class ProofState {
   int handsRemaining = 3;
   int blindTargetScore = 120;
   int blindScore = 0;
+  int discardsRemaining = 3;
 
   bool editorOpen = false;
   bool isFirstSubmissionInSession = true;
@@ -53,15 +57,37 @@ class ProofState {
 
   late List<PlayCard> _hand;
   int _nextLineId = 1;
+  int _nextCardId = 1;
+  final Random _rng = Random();
 
   List<PlayCard> get hand => _hand;
 
   void refillHand() {
-    final defaultCards = _defaultHand();
-    int defaultIdx = 0;
-    while (_hand.length < maxHandSize) {
-      _hand.add(defaultCards[defaultIdx % defaultCards.length]);
-      defaultIdx++;
+    final currentTotal = _hand.length + conclusionTokens.length;
+    if (currentTotal < maxHandSize) {
+      _drawCards(maxHandSize - currentTotal);
+    }
+  }
+
+  void discardHand() {
+    if (discardsRemaining <= 0) return;
+    final count = _hand.length;
+    if (count == 0) return;
+
+    discardsRemaining--;
+    _hand.clear();
+    _drawCards(count);
+  }
+
+  void _drawCards(int count) {
+    final templates = _defaultHandTemplates();
+    for (int i = 0; i < count; i++) {
+      final template = templates[_rng.nextInt(templates.length)];
+      _hand.add(PlayCard(
+        id: _nextCardId++,
+        content: template.content,
+        type: template.type,
+      ));
     }
   }
 
@@ -93,6 +119,8 @@ class ProofState {
     selectedSources.clear();
 
     _nextLineId = 1;
+    _nextCardId = 1;
+    _hand.clear();
     refillHand();
   }
 
@@ -187,17 +215,17 @@ class ProofState {
     lastScoreDelta = null;
   }
 
-  static List<PlayCard> _defaultHand() {
-    return const <PlayCard>[
-      PlayCard(content: 'P', type: CardType.atom),
-      PlayCard(content: 'Q', type: CardType.atom),
-      PlayCard(content: 'R', type: CardType.atom),
-      PlayCard(content: 'S', type: CardType.atom),
-      PlayCard(content: 'T', type: CardType.atom),
-      PlayCard(content: '~', type: CardType.connective),
-      PlayCard(content: '&', type: CardType.connective),
-      PlayCard(content: '(', type: CardType.connective),
-      PlayCard(content: ')', type: CardType.connective),
+  static List<PlayCard> _defaultHandTemplates() {
+    return <PlayCard>[
+      PlayCard(id: 0, content: 'P', type: CardType.atom),
+      PlayCard(id: 0, content: 'Q', type: CardType.atom),
+      PlayCard(id: 0, content: 'R', type: CardType.atom),
+      PlayCard(id: 0, content: 'S', type: CardType.atom),
+      PlayCard(id: 0, content: 'T', type: CardType.atom),
+      PlayCard(id: 0, content: '~', type: CardType.connective),
+      PlayCard(id: 0, content: '&', type: CardType.connective),
+      PlayCard(id: 0, content: '(', type: CardType.connective),
+      PlayCard(id: 0, content: ')', type: CardType.connective),
     ];
   }
 }

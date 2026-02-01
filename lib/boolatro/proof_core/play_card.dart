@@ -1,13 +1,16 @@
 /// Lightweight data object representing a card used to compose proof sentences.
 class PlayCard {
+  /// Unique identifier for this card instance.
+  final int id;
+
   /// The raw symbol/content (e.g., "A", "~", "&").
   final String content;
 
   /// Whether this card is an atom or a connective.
   final CardType type;
 
-  /// Creates a PlayCard with content and type.
-  const PlayCard({required this.content, required this.type});
+  /// Creates a PlayCard with id, content and type.
+  PlayCard({required this.id, required this.content, required this.type});
 }
 
 /// Type tags for [PlayCard].

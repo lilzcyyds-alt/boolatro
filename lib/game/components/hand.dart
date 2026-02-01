@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -8,9 +9,11 @@ import '../../state/run_state.dart';
 import '../../boolatro/proof_core/play_card.dart';
 import '../boolatro_game.dart';
 import 'stages/proof_stage.dart';
+import 'logic_card.dart';
 
 class HandComponent extends BoolatroComponent {
-  final Map<int, LogicCardComponent> _cardMap = {};
+  final Map<int, LogicCardComponent> cardMap = {};
+  final Set<int> _discardingIds = {};
 
   @override
   void onStateChanged() {
@@ -30,7 +33,7 @@ class HandComponent extends BoolatroComponent {
     final isProofPhase = runState.phase == GamePhase.proof;
     
     if (!isProofPhase) {
-      for (final card in _cardMap.values) {
+      for (final card in cardMap.values) {
         card.isVisible = false;
       }
       return;
@@ -38,14 +41,31 @@ class HandComponent extends BoolatroComponent {
 
     final hand = runState.proofState.hand;
     
-    final ownedIds = hand.map((c) => c.hashCode).toSet();
-    _cardMap.removeWhere((id, component) {
-      if (!ownedIds.contains(id)) {
-        remove(component);
-        return true;
+    final ownedIds = hand.map((c) => c.id).toSet();
+    
+    // Identify cards to fly out
+    for (final id in cardMap.keys.toList()) {
+      if (!ownedIds.contains(id) && !_discardingIds.contains(id)) {
+        final comp = cardMap[id]!;
+        
+        // Skip off-screen flyout if it's explicitly moving to conclusion
+        final inConclusion = runState.proofState.conclusionTokens.any((c) => c.id == id);
+        if (inConclusion) {
+          cardMap.remove(id);
+          remove(comp);
+          continue;
+        }
+
+        _discardingIds.add(id);
+        
+        // Fly to random offscreen pos then remove
+        comp.flyTo(LogicCardComponent.getRandomOffscreenPosition(size), duration: 0.6).then((_) {
+          cardMap.remove(id);
+          _discardingIds.remove(id);
+          remove(comp);
+        });
       }
-      return false;
-    });
+    }
 
     final count = hand.length;
     if (count == 0) return;
@@ -56,24 +76,32 @@ class HandComponent extends BoolatroComponent {
     // Fanning logic based on UI doc
     for (int i = 0; i < count; i++) {
       final card = hand[i];
-      final id = card.hashCode;
+      final id = card.id;
       
       final double angle = 0;
-      final double xOffset = (i - (count - 1) / 2) * 110; // Fixed spacing for linear layout
+      final double xOffset = (i - (count - 1) / 2) * 140; // Increased spacing to 140
       final double yOffset = 0;
       final targetPos = Vector2(size.x / 2 + xOffset, size.y / 2);
 
-      var cardComp = _cardMap[id];
+      var cardComp = cardMap[id];
       if (cardComp == null) {
         cardComp = LogicCardComponent(
           card: card,
           onPressed: () => runState.addConclusionCard(card),
         )
           ..size = Vector2(cardWidth, cardHeight)
-          ..anchor = Anchor.center
-          ..position = targetPos;
+          ..anchor = Anchor.center;
+          
+        // Use Global Registry for inheritance
+        final cachedPos = LogicCardComponent.getCachedPosition(id);
+        if (cachedPos != null) {
+          cardComp.position = cachedPos - absolutePosition;
+        } else {
+          cardComp.position = LogicCardComponent.getRandomOffscreenPosition(size);
+        }
+        
         add(cardComp);
-        _cardMap[id] = cardComp;
+        cardMap[id] = cardComp;
       }
 
       cardComp.isVisible = true;
@@ -127,111 +155,10 @@ class HandComponent extends BoolatroComponent {
 
     // Calculate new index based on x position
     final double relativeX = localPos.x - size.x / 2;
-    int newIdx = (relativeX / 110 + (hand.length - 1) / 2).round();
+    int newIdx = (relativeX / 140 + (hand.length - 1) / 2).round();
     newIdx = newIdx.clamp(0, hand.length - 1);
 
     if (newIdx != currentIdx) {
       runState.reorderHand(currentIdx, newIdx);
-    }
-  }
-}
-
-class LogicCardComponent extends PositionComponent with TapCallbacks, DragCallbacks, Flyable, HasGameRef<BoolatroGame> {
-  final dynamic card;
-  final VoidCallback onPressed;
-  bool isVisible = true;
-  bool isDragging = false;
-  
-  Vector2 targetPos = Vector2.zero();
-  double targetAngle = 0;
-
-  LogicCardComponent({required this.card, required this.onPressed});
-
-  @override
-  void renderTree(Canvas canvas) {
-    if (isVisible) {
-      super.renderTree(canvas);
-    }
-  }
-
-  @override
-  void onTapDown(TapDownEvent event) {
-    // Re-disabled click-to-play as requested to avoid conflicts
-    // if (isVisible) onPressed();
-  }
-
-  @override
-  void onDragStart(DragStartEvent event) {
-    isDragging = true;
-    priority = 1000; // Bring to front
-    // scale = Vector2.all(1.1); // Visual feedback
-    super.onDragStart(event);
-  }
-
-  @override
-  void onDragUpdate(DragUpdateEvent event) {
-    position += event.localDelta;
-    angle = 0; // Straighten when dragging
-    
-    final parent = this.parent;
-    if (parent is HandComponent) {
-      parent.checkReorder(this);
-    } else if (parent is ProofStageComponent) {
-      parent.checkReorder(this);
-    }
-    
-    super.onDragUpdate(event);
-  }
-
-  @override
-  void onDragEnd(DragEndEvent event) {
-    isDragging = false;
-    // scale = Vector2.all(1.0);
-    
-    final parent = this.parent;
-    if (parent is HandComponent) {
-      parent.handleCardDropped(this);
-    } else if (parent is ProofStageComponent) {
-      // Handle drag back to hand
-      parent.handleCardDroppedBack(this);
-    }
-    
-    super.onDragEnd(event);
-  }
-  
-  @override
-  void render(Canvas canvas) {
-    final rect = RRect.fromRectAndRadius(
-      size.toRect(),
-      const Radius.circular(8),
-    );
-    
-    // Shadow - deeper for better elevation
-    canvas.drawRRect(
-      rect.shift(const Offset(4, 4)),
-      Paint()..color = Colors.black.withOpacity(0.5),
-    );
-    
-    // Card body
-    canvas.drawRRect(rect, Paint()..color = Colors.white);
-    
-    // Border - more pronounced
-    canvas.drawRRect(rect, Paint()
-      ..color = Colors.black26
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3);
-    
-    // Content text - style based on card type
-    // We need to import play_card.dart to check CardType
-    final textPainter = (card.type == CardType.atom)
-        ? GameStyles.cardAtom 
-        : GameStyles.cardConnective;
-
-    textPainter.render(
-      canvas,
-      card.content,
-      Vector2(size.x / 2, size.y / 2),
-      anchor: Anchor.center,
-    );
   }
 }
