@@ -18,8 +18,8 @@ class SelectBlindStageComponent extends BoolatroComponent {
       anchor: Anchor.center,
     ));
 
-    final cardWidth = 160.0;
-    final cardHeight = 240.0;
+    final cardWidth = 200.0;
+    final cardHeight = 300.0;
 
     add(blindCard = BlindCardComponent(
       onPressed: () => runState.advancePhase(),
@@ -49,7 +49,16 @@ class BlindCardComponent extends PositionComponent with TapCallbacks {
 
   @override
   void onTapDown(TapDownEvent event) {
-    onPressed();
+    // Only trigger if clicking within the button area
+    final buttonRect = Rect.fromCenter(
+      center: Offset(size.x / 2, size.y - 40),
+      width: 140,
+      height: 40,
+    );
+    
+    if (buttonRect.contains(event.localPosition.toOffset())) {
+      onPressed();
+    }
   }
 
   @override
@@ -78,7 +87,7 @@ class BlindCardComponent extends PositionComponent with TapCallbacks {
     GameStyles.valueSmall.render(
       canvas,
       'SMALL BLIND',
-      Vector2(size.x / 2, size.y / 2 - 20),
+      Vector2(size.x / 2, size.y / 2 - 40),
       anchor: Anchor.center,
     );
 
@@ -86,18 +95,18 @@ class BlindCardComponent extends PositionComponent with TapCallbacks {
     GameStyles.label.render(
       canvas,
       'Reward: \$3',
-      Vector2(size.x / 2, size.y / 2 + 20),
+      Vector2(size.x / 2, size.y / 2 + 10),
       anchor: Anchor.center,
     );
 
     // "Lock Blind" button appearance
     final btnRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(size.x / 2, size.y - 40), width: 120, height: 30),
+      Rect.fromCenter(center: Offset(size.x / 2, size.y - 40), width: 140, height: 40),
       const Radius.circular(4),
     );
     canvas.drawRRect(btnRect, Paint()..color = Colors.white);
     
-    final textPaint = TextPaint(style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12));
+    final textPaint = TextPaint(style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 14));
     textPaint.render(canvas, 'LOCK BLIND', Vector2(size.x / 2, size.y - 40), anchor: Anchor.center);
   }
 }

@@ -74,11 +74,13 @@ class RunState extends ChangeNotifier {
   }
 
   void addConclusionCard(PlayCard card) {
+    if (_proofState.editorOpen) return;
     _proofState.addConclusionCard(card);
     notifyListeners();
   }
 
   void removeLastConclusionCard() {
+    if (_proofState.editorOpen) return;
     _proofState.removeLastConclusionCard();
     notifyListeners();
   }
@@ -93,6 +95,14 @@ class RunState extends ChangeNotifier {
       _proofState.handsRemaining--;
       _proofState.editorOpen = true;
       _proofState.isFirstSubmissionInSession = true;
+
+      if (_proofState.proofLines.isEmpty) {
+        _proofState.addProofLine(
+          isFixed: true,
+          sentence: _proofState.conclusionText,
+        );
+      }
+
       notifyListeners();
     }
   }
@@ -100,6 +110,10 @@ class RunState extends ChangeNotifier {
   void closeProofEditor() {
     _proofState.editorOpen = false;
     _proofState.refillHand();
+    _proofState.step = EditorStep.idle;
+    _proofState.activeLineId = null;
+    _proofState.pendingRule = null;
+    _proofState.selectedSources.clear();
 
     if (_proofState.blindScore < _proofState.blindTargetScore &&
         _proofState.handsRemaining <= 0) {
@@ -110,8 +124,120 @@ class RunState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addProofLine() {
-    _proofState.addProofLine();
+  void startAddLineFlow() {
+    _proofState.activeLineId = null;
+    _proofState.step = EditorStep.selectingRule;
+    notifyListeners();
+  }
+
+  void startJustifyLineFlow(int lineId) {
+    _proofState.activeLineId = lineId;
+    _proofState.step = EditorStep.selectingRule;
+    notifyListeners();
+  }
+
+  void selectRule(String rule) {
+    _proofState.pendingRule = rule;
+    _proofState.step = EditorStep.selectingSource;
+    _proofState.selectedSources.clear();
+    notifyListeners();
+  }
+
+  void pickFormulaSegment(String sentence, int sourceLineId) {
+    final rule = _proofState.pendingRule;
+    if (rule == null) return;
+
+    _proofState.selectedSources.add((sentence, sourceLineId));
+
+    // Determine if we have enough sources based on the rule
+    bool isComplete = false;
+    if (rule == '&intro') {
+      if (_proofState.selectedSources.length == 2) {
+        isComplete = true;
+      }
+    } else if (rule == '~elim') {
+      // Check if source has double negation
+      if (sentence.startsWith('~~')) {
+        isComplete = true;
+      }
+    } else {
+      // reit, &elim, ~intro only need 1 source
+      isComplete = true;
+    }
+
+    if (isComplete) {
+      // Calculate the resulting sentence based on the rule
+      String newSentence = '';
+      if (rule == '&intro') {
+        final s1 = _proofState.selectedSources[0].$1;
+        final s2 = _proofState.selectedSources[1].$1;
+        newSentence = '($s1&$s2)';
+      } else if (rule == '~intro') {
+        final s = _proofState.selectedSources[0].$1;
+        final hasConnective = s.contains('&') || s.contains('v');
+        newSentence = hasConnective ? '~~($s)' : '~~$s';
+      } else if (rule == '~elim') {
+        final s = _proofState.selectedSources[0].$1;
+        newSentence = s.startsWith('~~') ? s.substring(2) : s;
+      } else {
+        // reit, &elim
+        newSentence = sentence;
+      }
+
+      final normalizedGenerated = ProofValidator.deepNormalizeParentheses(newSentence);
+      final conclusionLine = _proofState.proofLines.firstWhere((l) => l.isFixed);
+      final normalizedFixed = ProofValidator.deepNormalizeParentheses(conclusionLine.sentence);
+
+      if (normalizedGenerated.toLowerCase() == normalizedFixed.toLowerCase()) {
+        // MATCH! Update the fixed line and auto-submit.
+        conclusionLine.rule = rule;
+        conclusionLine.citations = _proofState.selectedSources.map((s) => s.$2).join(',');
+        
+        _proofState.step = EditorStep.idle;
+        _proofState.pendingRule = null;
+        _proofState.selectedSources.clear();
+        _proofState.activeLineId = null;
+        
+        submitProof();
+        notifyListeners();
+        return;
+      }
+
+      // If no match, we either add a new line or update an existing one (though justify is disabled now)
+      final lineId = _proofState.activeLineId;
+      final ProofLineDraft line;
+      if (lineId != null) {
+        line = _proofState.proofLines.firstWhere((l) => l.id == lineId);
+        if (line.isFixed) {
+           _proofState.setValidationResult(false, 'Cannot manually justify the conclusion. Use intermediate steps.');
+           _proofState.step = EditorStep.idle;
+           _proofState.pendingRule = null;
+           _proofState.selectedSources.clear();
+           _proofState.activeLineId = null;
+           notifyListeners();
+           return;
+        }
+      } else {
+        line = _proofState.addProofLine();
+      }
+
+      line.sentence = newSentence;
+      line.rule = rule;
+      line.citations = _proofState.selectedSources.map((s) => s.$2).join(',');
+
+      _proofState.step = EditorStep.idle;
+      _proofState.pendingRule = null;
+      _proofState.selectedSources.clear();
+      _proofState.activeLineId = null;
+    }
+    
+    notifyListeners();
+  }
+
+  void cancelGuidedFlow() {
+    _proofState.step = EditorStep.idle;
+    _proofState.pendingRule = null;
+    _proofState.selectedSources.clear();
     notifyListeners();
   }
 

@@ -17,36 +17,36 @@ class ScoringPanelComponent extends BoolatroComponent {
     add(moneyText = TextComponent(
       text: '\$0',
       textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2, 60),
-      anchor: Anchor.center,
+      position: Vector2(size.x / 2 + 95, 60),
+      anchor: Anchor.centerRight,
     ));
 
     add(scoreText = TextComponent(
       text: '0',
       textRenderer: GameStyles.valueLarge,
-      position: Vector2(size.x / 2, 160),
+      position: Vector2(size.x / 2, 205),
       anchor: Anchor.center,
     ));
 
     add(targetText = TextComponent(
       text: 'Target: 0',
       textRenderer: GameStyles.label,
-      position: Vector2(size.x / 2, 210),
+      position: Vector2(size.x / 2, 245),
       anchor: Anchor.center,
     ));
 
     add(handsText = TextComponent(
       text: '0',
       textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2, 300),
-      anchor: Anchor.center,
+      position: Vector2(size.x / 2 + 95, 340),
+      anchor: Anchor.centerRight,
     ));
 
     add(discardsText = TextComponent(
       text: '0',
       textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2, 380),
-      anchor: Anchor.center,
+      position: Vector2(size.x / 2 + 95, 410),
+      anchor: Anchor.centerRight,
     ));
 
     onStateChanged();
@@ -73,7 +73,7 @@ class ScoringPanelComponent extends BoolatroComponent {
 
     // Score Box
     final scoreBox = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(size.x / 2, 180), width: 210, height: 110),
+      Rect.fromCenter(center: Offset(size.x / 2, 210), width: 210, height: 110),
       const Radius.circular(8),
     );
     canvas.drawRRect(scoreBox, Paint()..color = GameStyles.score.withOpacity(0.8));
@@ -81,13 +81,13 @@ class ScoringPanelComponent extends BoolatroComponent {
       ..color = Colors.white24
       ..style = PaintingStyle.stroke);
     
-    GameStyles.label.render(canvas, 'SCORE', Vector2(size.x / 2, 140), anchor: Anchor.center);
+    GameStyles.label.render(canvas, 'SCORE', Vector2(size.x / 2, 170), anchor: Anchor.center);
 
     // Hands Pill
-    _drawStatPill(canvas, Offset(size.x / 2, 300), 'HANDS', GameStyles.hands);
+    _drawStatPill(canvas, Offset(size.x / 2, 340), 'HANDS', GameStyles.hands);
     
     // Discards Pill
-    _drawStatPill(canvas, Offset(size.x / 2, 380), 'DISCARDS', GameStyles.discards);
+    _drawStatPill(canvas, Offset(size.x / 2, 410), 'DISCARDS', GameStyles.discards);
   }
 
   void _drawStatPill(Canvas canvas, Offset center, String label, Color color) {

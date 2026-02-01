@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, Painti
 import '../boolatro_component.dart';
 import '../styles.dart';
 import '../../state/run_state.dart';
+import '../../boolatro/proof_core/play_card.dart';
 
 class HandComponent extends BoolatroComponent {
   final Map<int, LogicCardComponent> _cardMap = {};
@@ -114,23 +115,27 @@ class LogicCardComponent extends PositionComponent with TapCallbacks, Flyable {
       const Radius.circular(8),
     );
     
-    // Shadow
+    // Shadow - deeper for better elevation
     canvas.drawRRect(
-      rect.shift(const Offset(3, 3)),
-      Paint()..color = Colors.black.withOpacity(0.4),
+      rect.shift(const Offset(4, 4)),
+      Paint()..color = Colors.black.withOpacity(0.5),
     );
     
     // Card body
     canvas.drawRRect(rect, Paint()..color = Colors.white);
     
-    // Border
+    // Border - more pronounced
     canvas.drawRRect(rect, Paint()
-      ..color = Colors.black12
+      ..color = Colors.black26
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2);
+      ..strokeWidth = 3);
     
-    // Content text
-    final textPainter = GameStyles.valueLarge;
+    // Content text - style based on card type
+    // We need to import play_card.dart to check CardType
+    final textPainter = (card.type == CardType.atom)
+        ? GameStyles.cardAtom 
+        : GameStyles.cardConnective;
+
     textPainter.render(
       canvas,
       card.content,

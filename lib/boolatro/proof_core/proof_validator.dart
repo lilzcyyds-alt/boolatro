@@ -129,8 +129,8 @@ class ProofValidator {
       );
     }
 
-    final normalizedLastLine = _deepNormalizeParentheses(lastLineContent);
-    final normalizedConclusion = _deepNormalizeParentheses(
+    final normalizedLastLine = deepNormalizeParentheses(lastLineContent);
+    final normalizedConclusion = deepNormalizeParentheses(
       proofPath.conclusion!.trim(),
     );
 
@@ -189,8 +189,8 @@ class ProofValidator {
       );
     }
 
-    final normalizedSentence = _deepNormalizeParentheses(sentence);
-    final normalizedTarget = _deepNormalizeParentheses(targetSentence);
+    final normalizedSentence = deepNormalizeParentheses(sentence);
+    final normalizedTarget = deepNormalizeParentheses(targetSentence);
 
     if (normalizedSentence.toLowerCase() == normalizedTarget.toLowerCase()) {
       return const ProofValidationResult(true, '');
@@ -248,9 +248,9 @@ class ProofValidator {
       );
     }
 
-    final normalizedSentence = _deepNormalizeParentheses(sentence);
-    final normalizedLeft = _deepNormalizeParentheses(conjuncts[0]);
-    final normalizedRight = _deepNormalizeParentheses(conjuncts[1]);
+    final normalizedSentence = deepNormalizeParentheses(sentence);
+    final normalizedLeft = deepNormalizeParentheses(conjuncts[0]);
+    final normalizedRight = deepNormalizeParentheses(conjuncts[1]);
 
     if (normalizedSentence.toLowerCase() == normalizedLeft.toLowerCase() ||
         normalizedSentence.toLowerCase() == normalizedRight.toLowerCase()) {
@@ -319,12 +319,12 @@ class ProofValidator {
     }
 
     final normalizedConjuncts = conjuncts
-        .map(_deepNormalizeParentheses)
+        .map(deepNormalizeParentheses)
         .map((value) => value.toLowerCase())
         .toList()
       ..sort();
     final normalizedCited = citedSentences
-        .map(_deepNormalizeParentheses)
+        .map(deepNormalizeParentheses)
         .map((value) => value.toLowerCase())
         .toList()
       ..sort();
@@ -388,8 +388,8 @@ class ProofValidator {
     }
 
     final negatedSentence = trimmedTarget.substring(2);
-    final normalizedSentence = _deepNormalizeParentheses(sentence);
-    final normalizedNegated = _deepNormalizeParentheses(negatedSentence);
+    final normalizedSentence = deepNormalizeParentheses(sentence);
+    final normalizedNegated = deepNormalizeParentheses(negatedSentence);
 
     if (normalizedSentence.toLowerCase() == normalizedNegated.toLowerCase()) {
       return const ProofValidationResult(true, '');
@@ -437,8 +437,8 @@ class ProofValidator {
             ? '~~(${targetSentence.trim()})'
             : '~~${targetSentence.trim()}';
 
-    final normalizedSentence = _deepNormalizeParentheses(sentence);
-    final normalizedExpected = _deepNormalizeParentheses(expectedNegation);
+    final normalizedSentence = deepNormalizeParentheses(sentence);
+    final normalizedExpected = deepNormalizeParentheses(expectedNegation);
 
     if (normalizedSentence.toLowerCase() == normalizedExpected.toLowerCase()) {
       return const ProofValidationResult(true, '');
@@ -536,7 +536,7 @@ class ProofValidator {
     return <String>[];
   }
 
-  static String _deepNormalizeParentheses(String sentence) {
+  static String deepNormalizeParentheses(String sentence) {
     final cleaned = _stripWhitespace(sentence);
     final parsed = _parseFormula(cleaned);
     if (parsed == null) {

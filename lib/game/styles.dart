@@ -45,6 +45,22 @@ class GameStyles {
       fontWeight: FontWeight.w900,
     ),
   );
+
+  static final TextPaint cardAtom = TextPaint(
+    style: const TextStyle(
+      color: Colors.black,
+      fontSize: 40,
+      fontWeight: FontWeight.w900,
+    ),
+  );
+
+  static final TextPaint cardConnective = TextPaint(
+    style: TextStyle(
+      color: Colors.blue.shade900,
+      fontSize: 40,
+      fontWeight: FontWeight.w900,
+    ),
+  );
 }
 
 class UIConfig {

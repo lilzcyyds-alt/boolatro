@@ -1,18 +1,26 @@
 import '../boolatro/proof_core/play_card.dart';
 import '../boolatro/proof_core/proof_task_generator.dart';
 
+enum EditorStep {
+  idle,
+  selectingRule,
+  selectingSource,
+}
+
 class ProofLineDraft {
   ProofLineDraft({
     required this.id,
     this.sentence = '',
-    this.rule = 'reit',
+    this.rule = '',
     this.citations = '',
+    this.isFixed = false,
   });
 
   final int id;
   String sentence;
   String rule;
   String citations;
+  final bool isFixed;
 }
 
 class ProofState {
@@ -36,6 +44,12 @@ class ProofState {
   String? lastValidationMessage;
   bool? lastValidationPassed;
   int? lastScoreDelta;
+
+  // Guided flow state
+  EditorStep step = EditorStep.idle;
+  int? activeLineId;
+  String? pendingRule;
+  final List<(String, int)> selectedSources = [];
 
   late List<PlayCard> _hand;
   int _nextLineId = 1;
@@ -73,6 +87,11 @@ class ProofState {
     lastValidationPassed = null;
     lastScoreDelta = null;
 
+    step = EditorStep.idle;
+    activeLineId = null;
+    pendingRule = null;
+    selectedSources.clear();
+
     _nextLineId = 1;
     refillHand();
   }
@@ -97,15 +116,43 @@ class ProofState {
     conclusionTokens.clear();
   }
 
-  ProofLineDraft addProofLine() {
-    final line = ProofLineDraft(id: _nextLineId++);
-    proofLines.add(line);
+  ProofLineDraft addProofLine({bool isFixed = false, String sentence = ''}) {
+    final line = ProofLineDraft(
+      id: _nextLineId++,
+      isFixed: isFixed,
+      sentence: sentence,
+    );
+
+    if (isFixed) {
+      proofLines.add(line);
+    } else {
+      // Insert before the first fixed line if it exists
+      final fixedIndex = proofLines.indexWhere((l) => l.isFixed);
+      if (fixedIndex != -1) {
+        proofLines.insert(fixedIndex, line);
+      } else {
+        proofLines.add(line);
+      }
+    }
     return line;
   }
 
   void clearProofLines() {
-    proofLines.clear();
-    _nextLineId = 1;
+    proofLines.removeWhere((l) => !l.isFixed);
+    for (final line in proofLines) {
+      if (line.isFixed) {
+        line.rule = '';
+        line.citations = '';
+      }
+    }
+    // We don't necessarily need to reset _nextLineId to 1 if we keep lines, 
+    // but we should ensure new IDs don't collide. 
+    // Actually, fixed lines already have IDs. We can find the max ID + 1.
+    if (proofLines.isEmpty) {
+      _nextLineId = 1;
+    } else {
+      _nextLineId = proofLines.map((l) => l.id).reduce((a, b) => a > b ? a : b) + 1;
+    }
   }
 
   void setValidationResult(bool isValid, String message, {int? scoreDelta}) {

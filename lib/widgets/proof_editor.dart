@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../state/proof_state.dart';
 import '../state/run_state.dart';
+import 'formula_view.dart';
 
 class ProofEditor extends StatelessWidget {
   const ProofEditor({super.key, required this.runState});
@@ -64,33 +65,42 @@ class ProofEditor extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            'LINE 1 (PREMISE): $premise',
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          const SizedBox(height: 12),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  ...proofState.proofLines.map(
-                    (line) => ProofLineRow(
-                      key: ValueKey('proof-line-${line.id}'),
-                      lineNumber: line.id + 1,
-                      line: line,
-                      onSentenceChanged: (value) =>
-                          runState.updateProofLineSentence(line, value),
-                      onRuleChanged: (value) {
-                        if (value == null) {
-                          return;
-                        }
-                        runState.updateProofLineRule(line, value);
-                      },
-                      onCitationsChanged: (value) =>
-                          runState.updateProofLineCitations(line, value),
-                    ),
+                   // Premise Row
+                   _LineItem(
+                     key: const Key('proof-premise-row'),
+                     label: 'L1 (Premise)',
+                     sentence: premise,
+                     isInteractive: proofState.step == EditorStep.selectingSource,
+                     ruleContext: proofState.pendingRule,
+                     onPressed: (seg) => runState.pickFormulaSegment(seg, 1),
+                     textKey: const Key('proof-premise'),
+                   ),
+                   const Divider(color: Colors.white12),
+                  ...proofState.proofLines.asMap().entries.map(
+                    (entry) {
+                      final index = entry.key;
+                      final line = entry.value;
+                      return _LineItem(
+                        label: 'L${index + 2}',
+                        sentence: line.sentence,
+                        rule: line.rule,
+                        citations: line.citations,
+                        isInteractive: proofState.step == EditorStep.selectingSource,
+                        ruleContext: proofState.pendingRule,
+                        onPressed: (seg) => runState.pickFormulaSegment(seg, index + 2),
+                        isFixed: line.isFixed,
+                        onJustify: line.isFixed ? null : () => runState.startJustifyLineFlow(line.id), // No justify for fixed
+                        activeLineId: proofState.activeLineId,
+                        currentLineId: line.id,
+                        isSourceable: !line.isFixed, // Conclusion cannot be a source
+                      );
+                    },
                   ),
-                  if (proofState.proofLines.isEmpty)
+                  if (proofState.proofLines.isEmpty && proofState.step == EditorStep.idle)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 20),
                       child: Text(
@@ -103,39 +113,54 @@ class ProofEditor extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              ElevatedButton(
-                onPressed: runState.addProofLine,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade800,
-                  foregroundColor: Colors.white,
+          const SizedBox(height: 12),
+          if (proofState.step == EditorStep.idle)
+            Row(
+              children: [
+                ElevatedButton(
+                  key: const Key('proof-add-line'),
+                  onPressed: runState.startAddLineFlow,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade800,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('ADD LINE'),
                 ),
-                child: const Text('ADD LINE'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: runState.clearProofEditor,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white54,
-                  side: const BorderSide(color: Colors.white24),
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  onPressed: runState.clearProofEditor,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white54,
+                    side: const BorderSide(color: Colors.white24),
+                  ),
+                  child: const Text('CLEAR'),
                 ),
-                child: const Text('CLEAR'),
-              ),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: (proofState.isFirstSubmissionInSession || proofState.handsRemaining > 0)
-                    ? runState.submitProof
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade800,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                const Spacer(),
+                ElevatedButton(
+                  key: const Key('proof-submit'),
+                  onPressed: (proofState.isFirstSubmissionInSession || proofState.handsRemaining > 0)
+                      ? runState.submitProof
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade800,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                  ),
+                  child: const Text('SUBMIT'),
                 ),
-                child: const Text('SUBMIT'),
-              ),
-            ],
-          ),
+              ],
+            ),
+          if (proofState.step == EditorStep.selectingRule)
+             _RulePicker(
+               onRuleSelected: runState.selectRule,
+               onCancel: runState.cancelGuidedFlow,
+             ),
+          if (proofState.step == EditorStep.selectingSource)
+             _SourceSelectionHeader(
+               rule: proofState.pendingRule ?? '',
+               selectedCount: proofState.selectedSources.length,
+               onCancel: runState.cancelGuidedFlow,
+             ),
           if (resultMessage != null && resultValid != null) ...[
             const SizedBox(height: 12),
             Container(
@@ -173,112 +198,161 @@ class ProofEditor extends StatelessWidget {
   }
 }
 
-class ProofLineRow extends StatelessWidget {
-  const ProofLineRow({
-    required this.lineNumber,
-    required this.line,
-    required this.onSentenceChanged,
-    required this.onRuleChanged,
-    required this.onCitationsChanged,
+class _LineItem extends StatelessWidget {
+  const _LineItem({
+    required this.label,
+    required this.sentence,
+    this.rule,
+    this.citations,
+    this.isInteractive = false,
+    this.ruleContext,
+    this.onPressed,
+    this.textKey,
+    this.isFixed = false,
+    this.onJustify,
+    this.activeLineId,
+    this.currentLineId,
+    this.isSourceable = true,
     super.key,
   });
 
-  final int lineNumber;
-  final ProofLineDraft line;
-  final ValueChanged<String> onSentenceChanged;
-  final ValueChanged<String?> onRuleChanged;
-  final ValueChanged<String> onCitationsChanged;
-
-  static const List<String> _rules = <String>[
-    'reit',
-    '&elim',
-    '&intro',
-    '~elim',
-    '~intro',
-  ];
+  final String label;
+  final String sentence;
+  final String? rule;
+  final String? citations;
+  final bool isInteractive;
+  final String? ruleContext;
+  final Function(String)? onPressed;
+  final Key? textKey;
+  final bool isFixed;
+  final VoidCallback? onJustify;
+  final int? activeLineId;
+  final int? currentLineId;
+  final bool isSourceable;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Line $lineNumber',
-            style: const TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 6),
-          TextFormField(
-            key: ValueKey('proof-line-${line.id}-sentence'),
-            initialValue: line.sentence,
-            onChanged: onSentenceChanged,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-            decoration: const InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              labelText: 'Sentence',
-              labelStyle: TextStyle(color: Colors.white70, fontSize: 12),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white24),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white70),
-              ),
+            Row(
+              children: [
+                Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                if (isFixed && (rule == null || rule!.isEmpty)) ...[
+                  const SizedBox(width: 8),
+                  Text('CONCLUSION',
+                      style: TextStyle(color: Colors.orange.shade300, fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                ],
+                if (rule != null && rule!.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Text(rule!.toUpperCase(), style: const TextStyle(color: Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                ],
+                if (citations != null && citations!.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Text('($citations)', style: const TextStyle(color: Colors.white24, fontSize: 10)),
+                ],
+                const Spacer(),
+                if (activeLineId != null && activeLineId == currentLineId)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.blueAccent),
+                    ),
+                    child: const Text('EDITING', style: TextStyle(color: Colors.blueAccent, fontSize: 8, fontWeight: FontWeight.bold)),
+                  ),
+              ],
             ),
-          ),
-          const SizedBox(height: 6),
+           const SizedBox(height: 4),
+           FormulaView(
+             sentence: sentence,
+             isClickable: isInteractive && isSourceable,
+             highlightSubFormulas: isInteractive && isSourceable,
+             ruleContext: ruleContext,
+             onSegmentPressed: onPressed,
+             textKey: textKey,
+           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RulePicker extends StatelessWidget {
+  const _RulePicker({required this.onRuleSelected, required this.onCancel});
+
+  final Function(String) onRuleSelected;
+  final VoidCallback onCancel;
+
+  static const List<String> _rules = ['reit', '&elim', '&intro', '~elim', '~intro'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white24),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: line.rule,
-                    isDense: true,
-                    dropdownColor: Colors.black87,
-                    items: _rules
-                        .map(
-                          (rule) => DropdownMenuItem<String>(
-                            value: rule,
-                            child: Text(
-                              rule,
-                              style: const TextStyle(color: Colors.white, fontSize: 13),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: onRuleChanged,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  key: ValueKey('proof-line-${line.id}-citations'),
-                  initialValue: line.citations,
-                  onChanged: onCitationsChanged,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    labelText: 'Citations',
-                    labelStyle: TextStyle(color: Colors.white70, fontSize: 12),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white24),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white70),
-                    ),
-                  ),
-                ),
-              ),
+              const Text('SELECT RULE', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              TextButton(onPressed: onCancel, child: const Text('CANCEL', style: TextStyle(color: Colors.redAccent, fontSize: 10))),
             ],
           ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: _rules.map((rule) => ElevatedButton(
+              onPressed: () => onRuleSelected(rule),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueGrey.shade900,
+                foregroundColor: Colors.white,
+                textStyle: const TextStyle(fontSize: 12),
+              ),
+              child: Text(rule),
+            )).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SourceSelectionHeader extends StatelessWidget {
+  const _SourceSelectionHeader({required this.rule, required this.selectedCount, required this.onCancel});
+
+  final String rule;
+  final int selectedCount;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    String msg = 'PICK SOURCE FOR $rule';
+    if (rule == '&intro') {
+      msg = selectedCount == 0 ? 'PICK FIRST CONJUNCT' : 'PICK SECOND CONJUNCT';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(msg, style: const TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+          TextButton(onPressed: onCancel, child: const Text('CANCEL', style: TextStyle(color: Colors.redAccent, fontSize: 10))),
         ],
       ),
     );
