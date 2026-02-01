@@ -49,8 +49,6 @@ class StageComponent extends BoolatroComponent {
     final nextPhase = runState.phase;
     final nextStage = _stageCache[nextPhase];
     if (nextStage == null) return;
-
-    final offscreenPos = Vector2(0, UIConfig.safeOffY);
     
     // Determine target Rect for the next stage based on UIConfig grid
     final bool isFullPage = nextPhase == GamePhase.start;
@@ -60,8 +58,8 @@ class StageComponent extends BoolatroComponent {
         : Vector2(UIConfig.stageWidth, UIConfig.stageHeight);
 
     if (_currentStage != null && _currentStage != nextStage) {
-      // Fly out current stage
-      _currentStage!.flyTo(offscreenPos, isVisibleAfter: false);
+      // Fly out current stage to a random offscreen position
+      _currentStage!.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleAfter: false);
     }
 
     nextStage.size = targetSize;
@@ -69,7 +67,8 @@ class StageComponent extends BoolatroComponent {
 
     if (nextStage != _currentStage) {
       nextStage.isVisible = true;
-      nextStage.position = offscreenPos;
+      // Fly in from a random offscreen position
+      nextStage.position = UIConfig.getRandomOffscreenPosition();
       nextStage.flyTo(targetPos);
     } else {
       // If phase changed but stage is the same, update size and position

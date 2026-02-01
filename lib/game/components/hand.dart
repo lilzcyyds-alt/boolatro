@@ -160,5 +160,6 @@ class HandComponent extends BoolatroComponent {
 
     if (newIdx != currentIdx) {
       runState.reorderHand(currentIdx, newIdx);
+    }
   }
 }

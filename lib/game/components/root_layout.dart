@@ -43,40 +43,62 @@ class RootLayoutComponent extends BoolatroComponent {
     final isStartPhase = runState.phase == GamePhase.start;
 
     // target positions in 1080p space based on UIConfig
-    final targetPhaseInfoPos = isStartPhase ? Vector2(-UIConfig.safeOffX, UIConfig.phaseInfoPos.y) : UIConfig.phaseInfoPos;
-    final targetJokerPos = isStartPhase ? Vector2(UIConfig.jokerRowPos.x, -UIConfig.safeOffY) : UIConfig.jokerRowPos;
-    final targetScoringPos = isStartPhase ? Vector2(-UIConfig.safeOffX, UIConfig.scoringPanelPos.y) : UIConfig.scoringPanelPos;
-    final targetActionPos = isStartPhase ? Vector2(UIConfig.screenWidth + UIConfig.safeOffX, UIConfig.actionPanelPos.y) : UIConfig.actionPanelPos;
-    final targetHandPos = isStartPhase ? Vector2(UIConfig.handPos.x, UIConfig.screenHeight + UIConfig.safeOffY) : UIConfig.handPos;
+    final targetPhaseInfoPos = UIConfig.phaseInfoPos;
+    final targetJokerPos = UIConfig.jokerRowPos;
+    final targetScoringPos = UIConfig.scoringPanelPos;
+    final targetActionPos = UIConfig.actionPanelPos;
+    final targetHandPos = UIConfig.handPos;
     
     // Stage container itself stays at (0,0) and full screen
     final targetStagePos = Vector2.zero();
 
     if (!_initialized) {
-      phaseInfo.position = targetPhaseInfoPos;
+      phaseInfo.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetPhaseInfoPos;
       phaseInfo.isVisible = !isStartPhase;
 
-      jokerRow.position = targetJokerPos;
+      jokerRow.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetJokerPos;
       jokerRow.isVisible = !isStartPhase;
       
-      scoringPanel.position = targetScoringPos;
+      scoringPanel.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetScoringPos;
       scoringPanel.isVisible = !isStartPhase;
       
-      actionPanel.position = targetActionPos;
+      actionPanel.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetActionPos;
       actionPanel.isVisible = !isStartPhase;
       
-      hand.position = targetHandPos;
+      hand.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetHandPos;
       hand.isVisible = !isStartPhase;
       
       stage.position = targetStagePos;
       stage.isVisible = true; 
       _initialized = true;
     } else {
-      phaseInfo.flyTo(targetPhaseInfoPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
-      jokerRow.flyTo(targetJokerPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
-      scoringPanel.flyTo(targetScoringPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
-      actionPanel.flyTo(targetActionPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
-      hand.flyTo(targetHandPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
+      // Calculate offscreen targets for components flying OUT or origins for components flying IN
+      final offscreenPos = UIConfig.getRandomOffscreenPosition();
+
+      if (isStartPhase) {
+        // Flying OUT to random offscreen
+        phaseInfo.flyTo(offscreenPos, isVisibleBefore: true, isVisibleAfter: false);
+        jokerRow.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
+        scoringPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
+        actionPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
+        hand.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
+      } else {
+        // Flying IN from current position (if it was offscreen) to target
+        // If we are coming from start phase, we might want to ensure they start at a random offscreen pos
+        // however flyTo usually moves from 'current' position.
+        // To ensure randomness on every 'in' transition:
+        if (!phaseInfo.isVisible) phaseInfo.position = UIConfig.getRandomOffscreenPosition();
+        if (!jokerRow.isVisible) jokerRow.position = UIConfig.getRandomOffscreenPosition();
+        if (!scoringPanel.isVisible) scoringPanel.position = UIConfig.getRandomOffscreenPosition();
+        if (!actionPanel.isVisible) actionPanel.position = UIConfig.getRandomOffscreenPosition();
+        if (!hand.isVisible) hand.position = UIConfig.getRandomOffscreenPosition();
+
+        phaseInfo.flyTo(targetPhaseInfoPos, isVisibleBefore: true, isVisibleAfter: true);
+        jokerRow.flyTo(targetJokerPos, isVisibleBefore: true, isVisibleAfter: true);
+        scoringPanel.flyTo(targetScoringPos, isVisibleBefore: true, isVisibleAfter: true);
+        actionPanel.flyTo(targetActionPos, isVisibleBefore: true, isVisibleAfter: true);
+        hand.flyTo(targetHandPos, isVisibleBefore: true, isVisibleAfter: true);
+      }
       // Stage doesn't move relative to root anymore
     }
   }

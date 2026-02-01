@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/text.dart';
 import 'package:flutter/material.dart';
@@ -108,4 +109,20 @@ class UIConfig {
   static Rect get stageRect => Rect.fromLTWH(stagePos.x, stagePos.y, stageWidth, stageHeight);
   static Rect get actionPanelRect => Rect.fromLTWH(actionPanelPos.x, actionPanelPos.y, actionPanelWidth, actionPanelHeight);
   static Rect get handRect => Rect.fromLTWH(handPos.x, handPos.y, handWidth, handHeight);
+
+  /// Returns a random position far outside the 1920x1080 screen.
+  static Vector2 getRandomOffscreenPosition() {
+    final rand = math.Random();
+    // Use an angle to determine direction
+    final double angle = rand.nextDouble() * 2 * math.pi;
+    // Radius should be large enough to be completely off-screen.
+    // Screen diagonal is sqrt(1920^2 + 1080^2) approx 2200.
+    // 2000-2500 is a safe range for the center of the container.
+    final double radius = 2000.0 + rand.nextDouble() * 500.0;
+    
+    return Vector2(
+      screenWidth / 2 + math.cos(angle) * radius,
+      screenHeight / 2 + math.sin(angle) * radius,
+    );
+  }
 }
