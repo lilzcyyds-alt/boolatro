@@ -6,9 +6,8 @@ import '../state/run_state.dart';
 import 'boolatro_game.dart';
 
 mixin Flyable on PositionComponent {
-  /// Smoothly moves the component to a target position.
-  /// If [isVisibleAfter] is false, the component will be hidden after the animation completes.
-  /// If [isVisibleBefore] is true, the component will be shown before the animation starts.
+  bool isFlying = false;
+
   Future<void> flyTo(
     Vector2 targetPosition, {
     double duration = 0.5,
@@ -16,6 +15,7 @@ mixin Flyable on PositionComponent {
     bool? isVisibleBefore,
     bool? isVisibleAfter,
   }) async {
+    isFlying = true;
     if (isVisibleBefore != null && this is BoolatroComponent) {
       (this as BoolatroComponent).isVisible = isVisibleBefore;
     }
@@ -29,6 +29,7 @@ mixin Flyable on PositionComponent {
     );
     await add(effect);
     await effect.completed;
+    isFlying = false;
 
     if (isVisibleAfter != null && this is BoolatroComponent) {
       (this as BoolatroComponent).isVisible = isVisibleAfter;

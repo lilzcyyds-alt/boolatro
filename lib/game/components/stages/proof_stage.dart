@@ -11,6 +11,38 @@ class ProofStageComponent extends BoolatroComponent {
   late final TextComponent conclusionLabel;
   final Map<int, LogicCardComponent> _conclusionCardMap = {};
 
+  void handleCardDroppedBack(LogicCardComponent cardComp) {
+    final localPos = cardComp.position;
+    
+    // Check if dropped back to hand
+    if (localPos.y > size.y - 120) { // Near bottom of stage
+      runState.removeConclusionCardAt(runState.proofState.conclusionTokens.indexOf(cardComp.card));
+      return;
+    }
+
+    // Final flight back to its slot
+    cardComp.flyTo(cardComp.targetPos);
+  }
+
+  void checkReorder(LogicCardComponent cardComp) {
+    final localPos = cardComp.position;
+    final tokens = runState.proofState.conclusionTokens;
+    final currentIdx = tokens.indexOf(cardComp.card);
+    if (currentIdx == -1) return;
+
+    final cardWidth = 70.0;
+    final spacing = 8.0;
+    final step = cardWidth + spacing;
+    final startX = (size.x - (tokens.length * step - spacing)) / 2 + cardWidth / 2;
+    
+    int newIdx = ((localPos.x - startX + (step / 2)) / step).floor();
+    newIdx = newIdx.clamp(0, tokens.length - 1);
+
+    if (newIdx != currentIdx) {
+      runState.reorderConclusionTokens(currentIdx, newIdx);
+    }
+  }
+
   @override
   Future<void> onLoad() async {
     add(premiseLabel = TextComponent(
@@ -61,25 +93,38 @@ class ProofStageComponent extends BoolatroComponent {
     final cardHeight = 100.0;
     final spacing = 8.0;
 
-    double startX = (size.x - (tokens.length * (cardWidth + spacing) - spacing)) / 2;
+    final step = cardWidth + spacing;
+    double startX = (size.x - (tokens.length * step - spacing)) / 2 + cardWidth / 2;
 
     for (int i = 0; i < tokens.length; i++) {
       final token = tokens[i];
       final id = token.hashCode;
-      final targetPos = Vector2(startX + i * (cardWidth + spacing), 200);
+      final targetPos = Vector2(startX + i * step, 250);
 
       var cardComp = _conclusionCardMap[id];
       if (cardComp == null) {
         cardComp = LogicCardComponent(
           card: token,
-          onPressed: () {},
+          onPressed: () => runState.removeConclusionCardAt(i),
         )
           ..size = Vector2(cardWidth, cardHeight)
+          ..anchor = Anchor.center
           ..position = targetPos;
         add(cardComp);
         _conclusionCardMap[id] = cardComp;
-      } else {
-        cardComp.flyTo(targetPos);
+      }
+
+      cardComp.isVisible = true;
+      cardComp.targetPos = targetPos;
+      
+      if (!cardComp.isDragging) {
+        cardComp.priority = 100;
+        final targetComp = cardComp;
+        targetComp.flyTo(targetPos).then((_) {
+          if (targetComp.isLoaded && !targetComp.isDragging && !targetComp.isFlying) {
+            targetComp.priority = i;
+          }
+        });
       }
     }
   }

@@ -79,9 +79,27 @@ class RunState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reorderHand(int oldIndex, int newIndex) {
+    if (_proofState.editorOpen) return;
+    _proofState.reorderHand(oldIndex, newIndex);
+    notifyListeners();
+  }
+
+  void reorderConclusionTokens(int oldIndex, int newIndex) {
+    if (_proofState.editorOpen) return;
+    _proofState.reorderConclusionTokens(oldIndex, newIndex);
+    notifyListeners();
+  }
+
   void removeLastConclusionCard() {
     if (_proofState.editorOpen) return;
     _proofState.removeLastConclusionCard();
+    notifyListeners();
+  }
+
+  void removeConclusionCardAt(int index) {
+    if (_proofState.editorOpen) return;
+    _proofState.removeConclusionCardAt(index);
     notifyListeners();
   }
 

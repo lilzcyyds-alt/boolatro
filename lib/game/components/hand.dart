@@ -6,6 +6,8 @@ import '../boolatro_component.dart';
 import '../styles.dart';
 import '../../state/run_state.dart';
 import '../../boolatro/proof_core/play_card.dart';
+import '../boolatro_game.dart';
+import 'stages/proof_stage.dart';
 
 class HandComponent extends BoolatroComponent {
   final Map<int, LogicCardComponent> _cardMap = {};
@@ -56,10 +58,10 @@ class HandComponent extends BoolatroComponent {
       final card = hand[i];
       final id = card.hashCode;
       
-      final double angle = (i - (count - 1) / 2) * 0.1;
-      final double xOffset = (i - (count - 1) / 2) * 85; // Slightly increased spacing
-      final double yOffset = (i - (count - 1) / 2).abs() * 12;
-      final targetPos = Vector2(size.x / 2 + xOffset, size.y - 10 - yOffset);
+      final double angle = 0;
+      final double xOffset = (i - (count - 1) / 2) * 110; // Fixed spacing for linear layout
+      final double yOffset = 0;
+      final targetPos = Vector2(size.x / 2 + xOffset, size.y / 2);
 
       var cardComp = _cardMap[id];
       if (cardComp == null) {
@@ -68,29 +70,80 @@ class HandComponent extends BoolatroComponent {
           onPressed: () => runState.addConclusionCard(card),
         )
           ..size = Vector2(cardWidth, cardHeight)
-          ..anchor = Anchor.bottomCenter;
-        
-        // If we are in the middle of a phase transition (from RootLayout), 
-        // don't fly the cards internally to avoid double-animation.
-        // We can check if parent position is far from target, but simpler is to 
-        // just check if this is a fresh layout.
-        cardComp.position = targetPos;
+          ..anchor = Anchor.center
+          ..position = targetPos;
         add(cardComp);
         _cardMap[id] = cardComp;
-      } else {
-        cardComp.isVisible = true;
-        cardComp.flyTo(targetPos);
       }
+
+      cardComp.isVisible = true;
+      cardComp.targetPos = targetPos;
+      cardComp.targetAngle = angle;
       
-      cardComp.angle = angle;
+      // Only update priority and angle/pos if NOT dragging
+      if (!cardComp.isDragging) {
+        // Boost priority while flying back to avoid being covered
+        cardComp.priority = 100;
+        final targetComp = cardComp;
+        targetComp.flyTo(targetPos).then((_) {
+          // Reset priority only if we are not dragging/flying again
+          if (targetComp.isLoaded && !targetComp.isDragging && !targetComp.isFlying) {
+            targetComp.priority = i;
+          }
+        });
+        cardComp.angle = angle;
+      }
+    }
+  }
+
+  void handleCardDropped(LogicCardComponent cardComp) {
+    // We already have the card's position relative to its parent (this HandComponent)
+    // because it's a child. So we can just use cardComp.position.
+    final localPos = cardComp.position;
+    
+    // Check if dropped in stage area (Central Region)
+    // Stage area is Region C: (250, 120) Size: (1420, 750) 
+    // Hand is Region E: (250, 880) Size: (1420, 190)
+    // hand.position is (250, 880) relative to RootLayout.
+    // So localPos in hand: (0,0) is (250, 880) globally.
+    // Stage is at (-760) relative to Hand (880 - 120 = 760).
+    // Let's use Rects from UIConfig for safety if available or just hardcoded relative check.
+    
+    if (localPos.y < -100) {
+      // Dropped above hand, likely stage area
+      runState.addConclusionCard(cardComp.card);
+      return;
+    }
+
+    // After drop, ensure it flies to its final position
+    cardComp.flyTo(cardComp.targetPos);
+  }
+
+  void checkReorder(LogicCardComponent cardComp) {
+    final localPos = cardComp.position;
+    final hand = runState.proofState.hand;
+    final currentIdx = hand.indexOf(cardComp.card);
+    if (currentIdx == -1) return;
+
+    // Calculate new index based on x position
+    final double relativeX = localPos.x - size.x / 2;
+    int newIdx = (relativeX / 110 + (hand.length - 1) / 2).round();
+    newIdx = newIdx.clamp(0, hand.length - 1);
+
+    if (newIdx != currentIdx) {
+      runState.reorderHand(currentIdx, newIdx);
     }
   }
 }
 
-class LogicCardComponent extends PositionComponent with TapCallbacks, Flyable {
+class LogicCardComponent extends PositionComponent with TapCallbacks, DragCallbacks, Flyable, HasGameRef<BoolatroGame> {
   final dynamic card;
   final VoidCallback onPressed;
   bool isVisible = true;
+  bool isDragging = false;
+  
+  Vector2 targetPos = Vector2.zero();
+  double targetAngle = 0;
 
   LogicCardComponent({required this.card, required this.onPressed});
 
@@ -103,11 +156,49 @@ class LogicCardComponent extends PositionComponent with TapCallbacks, Flyable {
 
   @override
   void onTapDown(TapDownEvent event) {
-    if (isVisible) {
-      onPressed();
-    }
+    // Re-disabled click-to-play as requested to avoid conflicts
+    // if (isVisible) onPressed();
   }
 
+  @override
+  void onDragStart(DragStartEvent event) {
+    isDragging = true;
+    priority = 1000; // Bring to front
+    // scale = Vector2.all(1.1); // Visual feedback
+    super.onDragStart(event);
+  }
+
+  @override
+  void onDragUpdate(DragUpdateEvent event) {
+    position += event.localDelta;
+    angle = 0; // Straighten when dragging
+    
+    final parent = this.parent;
+    if (parent is HandComponent) {
+      parent.checkReorder(this);
+    } else if (parent is ProofStageComponent) {
+      parent.checkReorder(this);
+    }
+    
+    super.onDragUpdate(event);
+  }
+
+  @override
+  void onDragEnd(DragEndEvent event) {
+    isDragging = false;
+    // scale = Vector2.all(1.0);
+    
+    final parent = this.parent;
+    if (parent is HandComponent) {
+      parent.handleCardDropped(this);
+    } else if (parent is ProofStageComponent) {
+      // Handle drag back to hand
+      parent.handleCardDroppedBack(this);
+    }
+    
+    super.onDragEnd(event);
+  }
+  
   @override
   void render(Canvas canvas) {
     final rect = RRect.fromRectAndRadius(

@@ -103,11 +103,31 @@ class ProofState {
     }
   }
 
+  void reorderHand(int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= _hand.length) return;
+    if (newIndex < 0 || newIndex >= _hand.length) return;
+    final card = _hand.removeAt(oldIndex);
+    _hand.insert(newIndex, card);
+  }
+
+  void reorderConclusionTokens(int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= conclusionTokens.length) return;
+    if (newIndex < 0 || newIndex >= conclusionTokens.length) return;
+    final card = conclusionTokens.removeAt(oldIndex);
+    conclusionTokens.insert(newIndex, card);
+  }
+
   void removeLastConclusionCard() {
     if (conclusionTokens.isEmpty) {
       return;
     }
     final card = conclusionTokens.removeLast();
+    _hand.add(card);
+  }
+
+  void removeConclusionCardAt(int index) {
+    if (index < 0 || index >= conclusionTokens.length) return;
+    final card = conclusionTokens.removeAt(index);
     _hand.add(card);
   }
 
