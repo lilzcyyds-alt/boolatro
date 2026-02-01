@@ -7,12 +7,14 @@ import '../../styles.dart';
 import '../action_panel.dart';
 
 class CashoutStageComponent extends BoolatroComponent {
+  late final TextComponent titleText;
+  late final TextComponent scoreText;
+  late final TextComponent rewardText;
+  late final GameButton collectButton;
+
   @override
   Future<void> onLoad() async {
-    final proof = runState.proofState;
-    final reward = (proof.blindScore / 10).floor();
-
-    add(TextComponent(
+    titleText = TextComponent(
       text: 'CASHOUT',
       textRenderer: TextPaint(
         style: const TextStyle(
@@ -22,32 +24,49 @@ class CashoutStageComponent extends BoolatroComponent {
           letterSpacing: 4,
         ),
       ),
-      position: Vector2(size.x / 2, 60),
       anchor: Anchor.center,
-    ));
+    );
 
-    add(TextComponent(
-      text: 'BLIND SCORE: ${proof.blindScore}',
+    scoreText = TextComponent(
+      text: '',
       textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2, 130),
       anchor: Anchor.center,
-    ));
+    );
 
-    add(TextComponent(
-      text: 'TOTAL REWARD: \$$reward',
+    rewardText = TextComponent(
+      text: '',
       textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2, 170),
       anchor: Anchor.center,
-    ));
+    );
 
-    add(GameButton(
+    collectButton = GameButton(
       label: 'COLLECT',
       color: Colors.green,
       onPressed: () => runState.cashOutAndGoToShop(),
     )
       ..size = Vector2(200, 50)
-      ..position = Vector2(size.x / 2, 250)
-      ..anchor = Anchor.center);
+      ..anchor = Anchor.center;
+
+    addAll([titleText, scoreText, rewardText, collectButton]);
+    onStateChanged();
+  }
+
+  @override
+  void onStateChanged() {
+    if (!isLoaded) return;
+    _layout();
+    
+    final proof = runState.proofState;
+    final reward = (proof.blindScore / 10).floor();
+    scoreText.text = 'BLIND SCORE: ${proof.blindScore}';
+    rewardText.text = 'TOTAL REWARD: \$$reward';
+  }
+
+  void _layout() {
+    titleText.position = Vector2(size.x / 2, 60);
+    scoreText.position = Vector2(size.x / 2, 130);
+    rewardText.position = Vector2(size.x / 2, 170);
+    collectButton.position = Vector2(size.x / 2, 250);
   }
 
   @override

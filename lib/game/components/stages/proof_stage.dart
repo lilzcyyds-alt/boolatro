@@ -4,32 +4,30 @@ import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, Painti
 import '../../boolatro_component.dart';
 import '../../styles.dart';
 import '../hand.dart';
-import '../../../state/run_state.dart';
 
 class ProofStageComponent extends BoolatroComponent {
+  late final TextComponent premiseLabel;
   late final TextComponent premiseText;
-  final List<LogicCardComponent> _conclusionCards = [];
+  late final TextComponent conclusionLabel;
+  final Map<int, LogicCardComponent> _conclusionCardMap = {};
 
   @override
   Future<void> onLoad() async {
-    add(TextComponent(
+    add(premiseLabel = TextComponent(
       text: 'PREMISE',
       textRenderer: GameStyles.label,
-      position: Vector2(size.x / 2, 40),
       anchor: Anchor.center,
     ));
 
     add(premiseText = TextComponent(
       text: '',
       textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2, 75),
       anchor: Anchor.center,
     ));
 
-    add(TextComponent(
+    add(conclusionLabel = TextComponent(
       text: 'CONCLUSION',
       textRenderer: GameStyles.label,
-      position: Vector2(size.x / 2, 140),
       anchor: Anchor.center,
     ));
 
@@ -40,15 +38,23 @@ class ProofStageComponent extends BoolatroComponent {
   void onStateChanged() {
     if (!isLoaded) return;
     
+    _layout();
+
     final proof = runState.proofState;
     premiseText.text = proof.premise ?? '...';
 
-    for (final card in _conclusionCards) {
-      remove(card);
-    }
-    _conclusionCards.clear();
-
     final tokens = proof.conclusionTokens;
+    
+    // Manage components
+    final currentIds = tokens.map((t) => t.hashCode).toSet();
+    _conclusionCardMap.removeWhere((id, comp) {
+      if (!currentIds.contains(id)) {
+        remove(comp);
+        return true;
+      }
+      return false;
+    });
+
     if (tokens.isEmpty) return;
 
     final cardWidth = 70.0;
@@ -58,22 +64,36 @@ class ProofStageComponent extends BoolatroComponent {
     double startX = (size.x - (tokens.length * (cardWidth + spacing) - spacing)) / 2;
 
     for (int i = 0; i < tokens.length; i++) {
-      final cardComp = LogicCardComponent(
-        card: tokens[i],
-        onPressed: () {},
-      )
-        ..size = Vector2(cardWidth, cardHeight)
-        ..position = Vector2(startX + i * (cardWidth + spacing), 180);
-      
-      add(cardComp);
-      _conclusionCards.add(cardComp);
+      final token = tokens[i];
+      final id = token.hashCode;
+      final targetPos = Vector2(startX + i * (cardWidth + spacing), 200);
+
+      var cardComp = _conclusionCardMap[id];
+      if (cardComp == null) {
+        cardComp = LogicCardComponent(
+          card: token,
+          onPressed: () {},
+        )
+          ..size = Vector2(cardWidth, cardHeight)
+          ..position = targetPos;
+        add(cardComp);
+        _conclusionCardMap[id] = cardComp;
+      } else {
+        cardComp.flyTo(targetPos);
+      }
     }
+  }
+
+  void _layout() {
+    premiseLabel.position = Vector2(size.x / 2, 40);
+    premiseText.position = Vector2(size.x / 2, 75);
+    conclusionLabel.position = Vector2(size.x / 2, 160);
   }
 
   @override
   void render(Canvas canvas) {
     final conclusionBox = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(size.x / 2, 230), width: size.x - 40, height: 120),
+      Rect.fromCenter(center: Offset(size.x / 2, 250), width: size.x - 40, height: 120),
       const Radius.circular(12),
     );
     canvas.drawRRect(conclusionBox, Paint()..color = Colors.white.withOpacity(0.05));
@@ -86,7 +106,7 @@ class ProofStageComponent extends BoolatroComponent {
       GameStyles.label.render(
         canvas,
         'PLAY CARDS TO BUILD CONCLUSION',
-        Vector2(size.x / 2, 230),
+        Vector2(size.x / 2, 250),
         anchor: Anchor.center,
       );
     }

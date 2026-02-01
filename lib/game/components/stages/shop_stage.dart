@@ -8,15 +8,31 @@ import '../action_panel.dart';
 
 class ShopStageComponent extends BoolatroComponent {
   final List<ShopItemComponent> _items = [];
+  late final BoolatroTextComponent titleText;
+  late final BoolatroTextComponent soldOutText;
+  late final GameButton backButton;
 
   @override
   Future<void> onLoad() async {
-    add(TextComponent(
+    add(titleText = BoolatroTextComponent(
       text: 'SHOP',
       textRenderer: GameStyles.title,
-      position: Vector2(size.x / 2, 40),
       anchor: Anchor.center,
     ));
+
+    add(soldOutText = BoolatroTextComponent(
+      text: 'SOLD OUT',
+      textRenderer: GameStyles.valueLarge,
+      anchor: Anchor.center,
+    )..isVisible = false);
+
+    add(backButton = GameButton(
+      label: 'BACK TO BLINDS',
+      color: GameStyles.discards,
+      onPressed: () => runState.advancePhase(),
+    )
+      ..size = Vector2(240, 60)
+      ..anchor = Anchor.center);
 
     onStateChanged();
   }
@@ -24,7 +40,14 @@ class ShopStageComponent extends BoolatroComponent {
   @override
   void onStateChanged() {
     if (!isLoaded) return;
+    _layout();
     _refreshInventory();
+  }
+
+  void _layout() {
+    titleText.position = Vector2(size.x / 2, 60);
+    soldOutText.position = size / 2;
+    backButton.position = Vector2(size.x / 2, size.y - 70);
   }
 
   void _refreshInventory() {
@@ -37,16 +60,12 @@ class ShopStageComponent extends BoolatroComponent {
     final inventory = shop.inventory;
 
     if (inventory.isEmpty) {
-      add(TextComponent(
-        text: 'SOLD OUT',
-        textRenderer: GameStyles.valueLarge,
-        position: size / 2,
-        anchor: Anchor.center,
-      ));
+      soldOutText.isVisible = true;
     } else {
-      final itemWidth = 110.0;
-      final itemHeight = 150.0;
-      final spacing = 20.0;
+      soldOutText.isVisible = false;
+      final itemWidth = 120.0;
+      final itemHeight = 170.0;
+      final spacing = 30.0;
 
       double startX = (size.x - (inventory.length * (itemWidth + spacing) - spacing)) / 2;
 
@@ -64,15 +83,6 @@ class ShopStageComponent extends BoolatroComponent {
         _items.add(itemComp);
       }
     }
-
-    add(GameButton(
-      label: 'BACK TO BLINDS',
-      color: Colors.red.shade900,
-      onPressed: () => runState.advancePhase(),
-    )
-      ..size = Vector2(160, 50)
-      ..position = Vector2(size.x / 2, size.y - 60)
-      ..anchor = Anchor.center);
   }
 }
 

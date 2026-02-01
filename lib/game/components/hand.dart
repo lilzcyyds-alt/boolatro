@@ -7,75 +7,104 @@ import '../styles.dart';
 import '../../state/run_state.dart';
 
 class HandComponent extends BoolatroComponent {
-  final List<LogicCardComponent> _cards = [];
+  final Map<int, LogicCardComponent> _cardMap = {};
 
   @override
   void onStateChanged() {
     if (!isLoaded) return;
-    if (!isVisible) {
-      _clearHand();
-      return;
-    }
     _refreshHand();
-  }
-
-  void _clearHand() {
-    for (final card in _cards) {
-      remove(card);
-    }
-    _cards.clear();
   }
 
   @override
   void render(Canvas canvas) {
-    if (!isVisible || runState.phase == GamePhase.start) {
-      _clearHand();
+    if (runState.phase == GamePhase.start) {
       return;
     }
     super.render(canvas);
   }
 
   void _refreshHand() {
-    _clearHand();
-
-    if (runState.phase != GamePhase.proof) return;
+    final isProofPhase = runState.phase == GamePhase.proof;
+    
+    if (!isProofPhase) {
+      for (final card in _cardMap.values) {
+        card.isVisible = false;
+      }
+      return;
+    }
 
     final hand = runState.proofState.hand;
+    
+    final ownedIds = hand.map((c) => c.hashCode).toSet();
+    _cardMap.removeWhere((id, component) {
+      if (!ownedIds.contains(id)) {
+        remove(component);
+        return true;
+      }
+      return false;
+    });
+
     final count = hand.length;
     if (count == 0) return;
 
-    final cardWidth = 70.0;
-    final cardHeight = 100.0;
+    final cardWidth = 105.0;
+    final cardHeight = 150.0;
     
+    // Fanning logic based on UI doc
     for (int i = 0; i < count; i++) {
-      final double angle = (i - (count - 1) / 2) * 0.1;
-      final double xOffset = (i - (count - 1) / 2) * 50;
-      final double yOffset = (i - (count - 1) / 2).abs() * 10;
-
-      final cardComp = LogicCardComponent(
-        card: hand[i],
-        onPressed: () => runState.addConclusionCard(hand[i]),
-      )
-        ..size = Vector2(cardWidth, cardHeight)
-        ..position = Vector2(size.x / 2 + xOffset, size.y - 20 - yOffset)
-        ..anchor = Anchor.bottomCenter
-        ..angle = angle;
+      final card = hand[i];
+      final id = card.hashCode;
       
-      add(cardComp);
-      _cards.add(cardComp);
+      final double angle = (i - (count - 1) / 2) * 0.1;
+      final double xOffset = (i - (count - 1) / 2) * 85; // Slightly increased spacing
+      final double yOffset = (i - (count - 1) / 2).abs() * 12;
+      final targetPos = Vector2(size.x / 2 + xOffset, size.y - 10 - yOffset);
+
+      var cardComp = _cardMap[id];
+      if (cardComp == null) {
+        cardComp = LogicCardComponent(
+          card: card,
+          onPressed: () => runState.addConclusionCard(card),
+        )
+          ..size = Vector2(cardWidth, cardHeight)
+          ..anchor = Anchor.bottomCenter;
+        
+        // If we are in the middle of a phase transition (from RootLayout), 
+        // don't fly the cards internally to avoid double-animation.
+        // We can check if parent position is far from target, but simpler is to 
+        // just check if this is a fresh layout.
+        cardComp.position = targetPos;
+        add(cardComp);
+        _cardMap[id] = cardComp;
+      } else {
+        cardComp.isVisible = true;
+        cardComp.flyTo(targetPos);
+      }
+      
+      cardComp.angle = angle;
     }
   }
 }
 
-class LogicCardComponent extends PositionComponent with TapCallbacks {
+class LogicCardComponent extends PositionComponent with TapCallbacks, Flyable {
   final dynamic card;
   final VoidCallback onPressed;
+  bool isVisible = true;
 
   LogicCardComponent({required this.card, required this.onPressed});
 
   @override
+  void renderTree(Canvas canvas) {
+    if (isVisible) {
+      super.renderTree(canvas);
+    }
+  }
+
+  @override
   void onTapDown(TapDownEvent event) {
-    onPressed();
+    if (isVisible) {
+      onPressed();
+    }
   }
 
   @override

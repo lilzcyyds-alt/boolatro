@@ -10,8 +10,8 @@ class BoolatroGame extends FlameGame {
   BoolatroGame({required this.runState})
       : super(
           camera: CameraComponent.withFixedResolution(
-            width: 1600,
-            height: 900,
+            width: 1920,
+            height: 1080,
           )..viewfinder.anchor = Anchor.topLeft,
         );
 
@@ -20,7 +20,7 @@ class BoolatroGame extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    final rootLayout = RootLayoutComponent()..size = Vector2(1600, 900);
+    final rootLayout = RootLayoutComponent()..size = Vector2(1920, 1080);
     world.add(rootLayout);
   }
 

@@ -13,13 +13,13 @@ class ActionPanelComponent extends BoolatroComponent {
 
   @override
   Future<void> onLoad() async {
-    const buttonWidth = 130.0;
-    const buttonHeight = 44.0;
-    const spacing = 16.0;
+    const buttonWidth = 180.0;
+    const buttonHeight = 60.0;
+    const spacing = 24.0;
 
     add(editButton = GameButton(
       label: 'EDIT PROOF',
-      color: Colors.orange.shade800,
+      color: GameStyles.money, // Using money color for edit
       onPressed: () => runState.openProofEditor(),
     )
       ..size = Vector2(buttonWidth, buttonHeight)
@@ -37,7 +37,7 @@ class ActionPanelComponent extends BoolatroComponent {
 
     add(clearButton = GameButton(
       label: 'CLEAR',
-      color: Colors.red.shade800,
+      color: GameStyles.discards, // Using discard color for clear
       onPressed: () => runState.clearConclusion(),
     )
       ..size = Vector2(buttonWidth, buttonHeight)
@@ -71,13 +71,12 @@ class ActionPanelComponent extends BoolatroComponent {
   }
 }
 
-class GameButton extends PositionComponent with TapCallbacks {
+class GameButton extends BoolatroComponent with TapCallbacks {
   final String label;
   final Color color;
   final VoidCallback onPressed;
   final TextPaint? textRenderer;
   bool isEnabled = true;
-  bool isVisible = true;
 
   GameButton({
     required this.label,
@@ -95,8 +94,6 @@ class GameButton extends PositionComponent with TapCallbacks {
 
   @override
   void render(Canvas canvas) {
-    if (!isVisible) return;
-
     final rect = RRect.fromRectAndRadius(
       size.toRect(),
       const Radius.circular(4),

@@ -1,7 +1,8 @@
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, PaintingStyle, Canvas;
+import 'package:flutter/material.dart' show Canvas;
 import '../boolatro_component.dart';
 import '../../state/run_state.dart';
+import '../styles.dart';
 import 'stages/start_stage.dart';
 import 'stages/select_blind_stage.dart';
 import 'stages/proof_stage.dart';
@@ -9,8 +10,27 @@ import 'stages/cashout_stage.dart';
 import 'stages/shop_stage.dart';
 
 class StageComponent extends BoolatroComponent {
-  PositionComponent? _currentStage;
+  final Map<GamePhase, BoolatroComponent> _stageCache = {};
+  BoolatroComponent? _currentStage;
   GamePhase? _lastPhase;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    size = Vector2(UIConfig.screenWidth, UIConfig.screenHeight);
+
+    // Initialize all stages upfront for reuse
+    _stageCache[GamePhase.start] = StartStageComponent()..size = Vector2(UIConfig.screenWidth, UIConfig.screenHeight);
+    _stageCache[GamePhase.selectBlind] = SelectBlindStageComponent()..size = Vector2(UIConfig.stageWidth, UIConfig.stageHeight);
+    _stageCache[GamePhase.proof] = ProofStageComponent()..size = Vector2(UIConfig.stageWidth, UIConfig.stageHeight);
+    _stageCache[GamePhase.cashout] = CashoutStageComponent()..size = Vector2(UIConfig.stageWidth, UIConfig.stageHeight);
+    _stageCache[GamePhase.shop] = ShopStageComponent()..size = Vector2(UIConfig.stageWidth, UIConfig.stageHeight);
+
+    for (final stage in _stageCache.values) {
+      stage.isVisible = false;
+      add(stage);
+    }
+  }
 
   @override
   void onStateChanged() {
@@ -22,32 +42,39 @@ class StageComponent extends BoolatroComponent {
   }
 
   void _updateStage() {
-    if (_currentStage != null) {
-      remove(_currentStage!);
+    final nextPhase = runState.phase;
+    final nextStage = _stageCache[nextPhase];
+    if (nextStage == null) return;
+
+    final offscreenPos = Vector2(0, UIConfig.safeOffY);
+    
+    // Determine target Rect for the next stage based on UIConfig grid
+    final bool isFullPage = nextPhase == GamePhase.start;
+    final targetPos = isFullPage ? Vector2.zero() : UIConfig.stagePos;
+    final targetSize = isFullPage 
+        ? Vector2(UIConfig.screenWidth, UIConfig.screenHeight) 
+        : Vector2(UIConfig.stageWidth, UIConfig.stageHeight);
+
+    if (_currentStage != null && _currentStage != nextStage) {
+      // Fly out current stage
+      _currentStage!.flyTo(offscreenPos, isVisibleAfter: false);
     }
 
-    switch (runState.phase) {
-      case GamePhase.start:
-        _currentStage = StartStageComponent();
-        break;
-      case GamePhase.selectBlind:
-        _currentStage = SelectBlindStageComponent();
-        break;
-      case GamePhase.proof:
-        _currentStage = ProofStageComponent();
-        break;
-      case GamePhase.cashout:
-        _currentStage = CashoutStageComponent();
-        break;
-      case GamePhase.shop:
-        _currentStage = ShopStageComponent();
-        break;
+    nextStage.size = targetSize;
+    nextStage.onStateChanged();
+
+    if (nextStage != _currentStage) {
+      nextStage.isVisible = true;
+      nextStage.position = offscreenPos;
+      nextStage.flyTo(targetPos);
+    } else {
+      // If phase changed but stage is the same, update size and position
+      nextStage.flyTo(targetPos);
+      nextStage.size = targetSize;
+      nextStage.isVisible = true;
     }
 
-    if (_currentStage != null) {
-      _currentStage!.size = size;
-      add(_currentStage!);
-    }
+    _currentStage = nextStage;
   }
 
   @override

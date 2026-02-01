@@ -17,35 +17,35 @@ class ScoringPanelComponent extends BoolatroComponent {
     add(moneyText = TextComponent(
       text: '\$0',
       textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2, 45),
+      position: Vector2(size.x / 2, 60),
       anchor: Anchor.center,
     ));
 
     add(scoreText = TextComponent(
       text: '0',
       textRenderer: GameStyles.valueLarge,
-      position: Vector2(size.x / 2, 110),
+      position: Vector2(size.x / 2, 160),
       anchor: Anchor.center,
     ));
 
     add(targetText = TextComponent(
       text: 'Target: 0',
       textRenderer: GameStyles.label,
-      position: Vector2(size.x / 2, 145),
+      position: Vector2(size.x / 2, 210),
       anchor: Anchor.center,
     ));
 
     add(handsText = TextComponent(
       text: '0',
       textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2, 210),
+      position: Vector2(size.x / 2, 300),
       anchor: Anchor.center,
     ));
 
     add(discardsText = TextComponent(
       text: '0',
       textRenderer: GameStyles.valueSmall,
-      position: Vector2(size.x / 2, 260),
+      position: Vector2(size.x / 2, 380),
       anchor: Anchor.center,
     ));
 
@@ -69,30 +69,30 @@ class ScoringPanelComponent extends BoolatroComponent {
       ..strokeWidth = 2);
 
     // Money Pill
-    _drawStatPill(canvas, Offset(size.x / 2, 45), 'MONEY', Colors.orange.shade700);
+    _drawStatPill(canvas, Offset(size.x / 2, 60), 'MONEY', GameStyles.money);
 
     // Score Box
     final scoreBox = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(size.x / 2, 125), width: 160, height: 80),
+      Rect.fromCenter(center: Offset(size.x / 2, 180), width: 210, height: 110),
       const Radius.circular(8),
     );
-    canvas.drawRRect(scoreBox, Paint()..color = Colors.red.shade900.withOpacity(0.8));
+    canvas.drawRRect(scoreBox, Paint()..color = GameStyles.score.withOpacity(0.8));
     canvas.drawRRect(scoreBox, Paint()
       ..color = Colors.white24
       ..style = PaintingStyle.stroke);
     
-    GameStyles.label.render(canvas, 'SCORE', Vector2(size.x / 2, 95), anchor: Anchor.center);
+    GameStyles.label.render(canvas, 'SCORE', Vector2(size.x / 2, 140), anchor: Anchor.center);
 
     // Hands Pill
-    _drawStatPill(canvas, Offset(size.x / 2, 210), 'HANDS', Colors.blue.shade700);
+    _drawStatPill(canvas, Offset(size.x / 2, 300), 'HANDS', GameStyles.hands);
     
     // Discards Pill
-    _drawStatPill(canvas, Offset(size.x / 2, 260), 'DISCARDS', Colors.red.shade700);
+    _drawStatPill(canvas, Offset(size.x / 2, 380), 'DISCARDS', GameStyles.discards);
   }
 
   void _drawStatPill(Canvas canvas, Offset center, String label, Color color) {
     final pillRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: center, width: 160, height: 36),
+      Rect.fromCenter(center: center, width: 210, height: 48),
       const Radius.circular(4),
     );
     canvas.drawRRect(pillRect, Paint()..color = color);
@@ -101,7 +101,7 @@ class ScoringPanelComponent extends BoolatroComponent {
       ..style = PaintingStyle.stroke);
     
     final labelPainter = GameStyles.label;
-    labelPainter.render(canvas, label, Vector2(center.dx - 70, center.dy), anchor: Anchor.centerLeft);
+    labelPainter.render(canvas, label, Vector2(center.dx - 90, center.dy), anchor: Anchor.centerLeft);
   }
 
   @override

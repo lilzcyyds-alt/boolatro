@@ -7,24 +7,38 @@ import '../../styles.dart';
 // import '../../../state/run_state.dart';
 
 class SelectBlindStageComponent extends BoolatroComponent {
+  late final TextComponent titleText;
+  late final BlindCardComponent blindCard;
+
   @override
   Future<void> onLoad() async {
-    add(TextComponent(
+    add(titleText = TextComponent(
       text: 'SELECT BLIND',
       textRenderer: GameStyles.title,
-      position: Vector2(size.x / 2, 40),
       anchor: Anchor.center,
     ));
 
     final cardWidth = 160.0;
     final cardHeight = 240.0;
 
-    add(BlindCardComponent(
+    add(blindCard = BlindCardComponent(
       onPressed: () => runState.advancePhase(),
     )
       ..size = Vector2(cardWidth, cardHeight)
-      ..position = Vector2(size.x / 2, size.y / 2 + 20)
       ..anchor = Anchor.center);
+    
+    _layout();
+  }
+
+  @override
+  void onStateChanged() {
+    if (!isLoaded) return;
+    _layout();
+  }
+
+  void _layout() {
+    titleText.position = Vector2(size.x / 2, 60);
+    blindCard.position = Vector2(size.x / 2, size.y / 2 + 20);
   }
 }
 

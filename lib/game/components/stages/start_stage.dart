@@ -5,34 +5,33 @@ import 'package:flutter/material.dart' show Colors, Offset, Shadow, TextStyle, F
 import '../../boolatro_component.dart';
 import '../../styles.dart';
 import '../action_panel.dart';
-// import '../../../state/run_state.dart'; (Removed unused import)
 
 class StartStageComponent extends BoolatroComponent {
-  late final TextComponent titleText;
-  late final TextComponent subtitleText;
+  late final BoolatroTextComponent titleText;
+  late final BoolatroTextComponent subtitleText;
   late final GameButton startButton;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    titleText = TextComponent(
+    titleText = BoolatroTextComponent(
       text: 'BOOLATRO',
       textRenderer: TextPaint(
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 72,
+          fontSize: 96,
           fontWeight: FontWeight.w900,
-          letterSpacing: 12,
+          letterSpacing: 16,
           shadows: [
-            Shadow(color: Colors.red, offset: Offset(4, 4)),
-            Shadow(color: Colors.blue, offset: Offset(-4, -4)),
+            Shadow(color: Colors.red, offset: Offset(6, 6)),
+            Shadow(color: Colors.blue, offset: Offset(-6, -6)),
           ],
         ),
       ),
       anchor: Anchor.center,
     );
 
-    subtitleText = TextComponent(
+    subtitleText = BoolatroTextComponent(
       text: 'THE LOGIC PROOF ROGUELIKE',
       textRenderer: GameStyles.label,
       anchor: Anchor.center,
@@ -45,22 +44,30 @@ class StartStageComponent extends BoolatroComponent {
       textRenderer: TextPaint(
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 24,
+          fontSize: 32,
           fontWeight: FontWeight.bold,
-          letterSpacing: 2,
+          letterSpacing: 4,
         ),
       ),
     )
-      ..size = Vector2(200, 60)
+      ..size = Vector2(280, 80)
       ..anchor = Anchor.center;
 
     await addAll([titleText, subtitleText, startButton]);
+  }
+
+  @override
+  void onStateChanged() {
+    if (!isLoaded) return;
     _layout();
   }
 
   void _layout() {
-    titleText.position = Vector2(size.x / 2, size.y / 2 - 120);
+    // Title position
+    titleText.position = Vector2(size.x / 2, size.y / 2 - 160);
+    // Subtitle position
     subtitleText.position = Vector2(size.x / 2, size.y / 2 - 40);
-    startButton.position = Vector2(size.x / 2, size.y / 2 + 80);
+    // Button position
+    startButton.position = Vector2(size.x / 2, size.y / 2 + 120);
   }
 }

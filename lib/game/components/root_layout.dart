@@ -1,15 +1,18 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart' show Colors, Paint;
+import 'package:flutter/material.dart' show Colors, Paint, LinearGradient, Alignment;
 import '../boolatro_component.dart';
 import 'joker_row.dart';
 import 'scoring_panel.dart';
 import 'action_panel.dart';
 import 'hand.dart';
 import 'stage.dart';
+import 'phase_info.dart';
 import '../../state/run_state.dart';
+import '../styles.dart';
 
 class RootLayoutComponent extends BoolatroComponent {
+  late final PhaseInfoComponent phaseInfo;
   late final JokerRowComponent jokerRow;
   late final ScoringPanelComponent scoringPanel;
   late final ActionPanelComponent actionPanel;
@@ -21,71 +24,79 @@ class RootLayoutComponent extends BoolatroComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    jokerRow = JokerRowComponent();
-    scoringPanel = ScoringPanelComponent();
-    actionPanel = ActionPanelComponent();
-    hand = HandComponent();
-    stage = StageComponent();
+    size = Vector2(UIConfig.screenWidth, UIConfig.screenHeight);
     
-    addAll([jokerRow, scoringPanel, actionPanel, hand, stage]);
-    _initialized = true;
+    phaseInfo = PhaseInfoComponent()..size = Vector2(UIConfig.phaseInfoWidth, UIConfig.phaseInfoHeight);
+    jokerRow = JokerRowComponent()..size = Vector2(UIConfig.jokerRowWidth, UIConfig.jokerRowHeight);
+    scoringPanel = ScoringPanelComponent()..size = Vector2(UIConfig.scoringPanelWidth, UIConfig.scoringPanelHeight);
+    actionPanel = ActionPanelComponent()..size = Vector2(UIConfig.actionPanelWidth, UIConfig.actionPanelHeight);
+    hand = HandComponent()..size = Vector2(UIConfig.handWidth, UIConfig.handHeight);
+    stage = StageComponent()..size = Vector2(UIConfig.screenWidth, UIConfig.screenHeight);
+    
+    addAll([phaseInfo, jokerRow, scoringPanel, actionPanel, hand, stage]);
     _layout();
   }
 
   void _layout() {
-    if (!_initialized) return;
-
-    // virtual size based on current size
-    final virtualWidth = size.x;
-    final virtualHeight = size.y;
-
-    if (virtualWidth <= 0 || virtualHeight <= 0) return;
-
-    const jokerRowHeight = 80.0;
-    const scoringPanelWidth = 170.0;
-    const actionPanelWidth = 170.0;
-    const handHeight = 150.0;
+    if (!isLoaded) return;
 
     final isStartPhase = runState.phase == GamePhase.start;
 
-    // Always keep panels active in the tree, but sub-components handle their internal content visibility.
-    jokerRow.isVisible = true;
-    scoringPanel.isVisible = true;
-    actionPanel.isVisible = true;
-    hand.isVisible = true;
+    // target positions in 1080p space based on UIConfig
+    final targetPhaseInfoPos = isStartPhase ? Vector2(-UIConfig.safeOffX, UIConfig.phaseInfoPos.y) : UIConfig.phaseInfoPos;
+    final targetJokerPos = isStartPhase ? Vector2(UIConfig.jokerRowPos.x, -UIConfig.safeOffY) : UIConfig.jokerRowPos;
+    final targetScoringPos = isStartPhase ? Vector2(-UIConfig.safeOffX, UIConfig.scoringPanelPos.y) : UIConfig.scoringPanelPos;
+    final targetActionPos = isStartPhase ? Vector2(UIConfig.screenWidth + UIConfig.safeOffX, UIConfig.actionPanelPos.y) : UIConfig.actionPanelPos;
+    final targetHandPos = isStartPhase ? Vector2(UIConfig.handPos.x, UIConfig.screenHeight + UIConfig.safeOffY) : UIConfig.handPos;
+    
+    // Stage container itself stays at (0,0) and full screen
+    final targetStagePos = Vector2.zero();
 
-    jokerRow.position = Vector2(0, 0);
-    jokerRow.size = Vector2(virtualWidth, jokerRowHeight);
+    if (!_initialized) {
+      phaseInfo.position = targetPhaseInfoPos;
+      phaseInfo.isVisible = !isStartPhase;
 
-    scoringPanel.position = Vector2(0, jokerRowHeight);
-    scoringPanel.size = Vector2(scoringPanelWidth, virtualHeight - jokerRowHeight - handHeight);
-
-    actionPanel.position = Vector2(virtualWidth - actionPanelWidth, jokerRowHeight);
-    actionPanel.size = Vector2(actionPanelWidth, virtualHeight - jokerRowHeight - handHeight);
-
-    hand.position = Vector2(0, virtualHeight - handHeight);
-    hand.size = Vector2(virtualWidth, handHeight);
-
-    stage.position = Vector2(scoringPanelWidth, jokerRowHeight);
-    stage.size = Vector2(virtualWidth - scoringPanelWidth - actionPanelWidth,
-        virtualHeight - jokerRowHeight - handHeight);
+      jokerRow.position = targetJokerPos;
+      jokerRow.isVisible = !isStartPhase;
+      
+      scoringPanel.position = targetScoringPos;
+      scoringPanel.isVisible = !isStartPhase;
+      
+      actionPanel.position = targetActionPos;
+      actionPanel.isVisible = !isStartPhase;
+      
+      hand.position = targetHandPos;
+      hand.isVisible = !isStartPhase;
+      
+      stage.position = targetStagePos;
+      stage.isVisible = true; 
+      _initialized = true;
+    } else {
+      phaseInfo.flyTo(targetPhaseInfoPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
+      jokerRow.flyTo(targetJokerPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
+      scoringPanel.flyTo(targetScoringPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
+      actionPanel.flyTo(targetActionPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
+      hand.flyTo(targetHandPos, isVisibleBefore: true, isVisibleAfter: !isStartPhase);
+      // Stage doesn't move relative to root anymore
+    }
   }
 
   @override
   void render(Canvas canvas) {
-    // Fill the 16:9 area with a base background color
-    canvas.drawRect(size.toRect(), Paint()..color = const Color(0xFF0B0B0B));
-
-    // Optional: Render faint sidebar dividers even in Start phase to anchor 16:9 look
+    // Fill the 16:9 area with a base background gradient
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.blueGrey.shade900,
+          Colors.black,
+        ],
+      ).createShader(size.toRect());
     
-    // Left divider
-    canvas.drawLine(const Offset(170, 80), Offset(170, size.y - 150), paint);
-    // Right divider
-    canvas.drawLine(Offset(size.x - 170, 80), Offset(size.x - 170, size.y - 150), paint);
+    canvas.drawRect(size.toRect(), paint);
+
+    // Optional: Render subtle grid or dividers if needed, but the design doc emphasizes clean areas.
   }
 
   @override
