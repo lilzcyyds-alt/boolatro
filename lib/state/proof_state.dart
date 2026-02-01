@@ -45,7 +45,6 @@ class ProofState {
   int discardsRemaining = GameConfig.initialDiscards;
 
   bool editorOpen = false;
-  bool isFirstSubmissionInSession = true;
   String? lastValidationMessage;
   bool? lastValidationPassed;
   int? lastScoreDelta;
@@ -122,7 +121,6 @@ class ProofState {
 
     // Reset per-attempt editor UI.
     editorOpen = false;
-    isFirstSubmissionInSession = true;
     lastValidationMessage = null;
     lastValidationPassed = null;
     lastScoreDelta = null;
@@ -133,7 +131,7 @@ class ProofState {
     selectedSources.clear();
 
     _nextLineId = 1;
-    _nextCardId = 1;
+    // _nextCardId is NOT reset - use monotonically increasing IDs across blinds
     _hand.clear();
     refillHand();
   }

@@ -10,6 +10,7 @@ import '../boolatro/effects/effect_engine.dart';
 import '../boolatro/effects/effect_trigger.dart';
 import '../boolatro/proof_core/proof_scoring.dart';
 import '../boolatro/proof_core/proof_validator.dart';
+import '../game/components/logic_card.dart';
 import '../game/game_config.dart';
 import '../game/systems/blind_system.dart';
 import 'proof_state.dart';
@@ -148,14 +149,14 @@ class RunState extends ChangeNotifier {
     if (_proofState.hasConclusion && _proofState.handsRemaining > 0) {
       _proofState.handsRemaining--;
       _proofState.editorOpen = true;
-      _proofState.isFirstSubmissionInSession = true;
 
-      if (_proofState.proofLines.isEmpty) {
-        _proofState.addProofLine(
-          isFixed: true,
-          sentence: _proofState.conclusionText,
-        );
-      }
+      // Always ensure we have a fresh conclusion line for this proof attempt
+      // Remove any stale conclusion lines from previous attempts
+      _proofState.proofLines.removeWhere((l) => l.isFixed);
+      _proofState.addProofLine(
+        isFixed: true,
+        sentence: _proofState.conclusionText,
+      );
 
       notifyListeners();
     }
@@ -246,14 +247,13 @@ class RunState extends ChangeNotifier {
         // MATCH! Update the fixed line and auto-submit.
         conclusionLine.rule = rule;
         conclusionLine.citations = _proofState.selectedSources.map((s) => s.$2).join(',');
-        
+
         _proofState.step = EditorStep.idle;
         _proofState.pendingRule = null;
         _proofState.selectedSources.clear();
         _proofState.activeLineId = null;
-        
+
         submitProof();
-        notifyListeners();
         return;
       }
 
@@ -332,17 +332,6 @@ class RunState extends ChangeNotifier {
 
     final result = ProofValidator.validateProofPath(proofPath);
 
-    // If this is NOT the first submission in this editor session,
-    // we need to deduct another hand.
-    if (!_proofState.isFirstSubmissionInSession) {
-      if (_proofState.handsRemaining > 0) {
-        _proofState.handsRemaining--;
-      } else {
-        // This shouldn't happen if UI is disabled correctly,
-        // but as a safety:
-        return result;
-      }
-    }
 
     // Phase 3 settlement: valid / baseScore / fallbackScore.
     var delta = result.isValid
@@ -370,14 +359,10 @@ class RunState extends ChangeNotifier {
       scoreDelta: delta,
     );
 
-    // After the submission is processed, it's no longer the "first" submission.
-    _proofState.isFirstSubmissionInSession = false;
-
     // Blind loop: clear -> Cashout, else check hands left.
     if (_proofState.blindScore >= _proofState.blindTargetScore) {
       _phase = GamePhase.cashout;
       _cashoutPending = true;
-      _proofState.editorOpen = false;
 
       // Logic for advancing sequence
       if (_currentBlindIndex == 2) {
@@ -388,18 +373,9 @@ class RunState extends ChangeNotifier {
         _currentBlindIndex++;
       }
     } else {
-      if (_proofState.handsRemaining <= 0) {
-        // No hands left, defeat.
-        _phase = GamePhase.defeat;
-        _proofState.editorOpen = false;
-      } else {
-        // Not enough score, but hands remain.
-        // Stay in editor for further modifications as per design doc.
-        // We do NOT call closeProofEditor() here.
-      }
     }
 
-    notifyListeners();
+    closeProofEditor();
     return result;
   }
 
@@ -424,6 +400,9 @@ class RunState extends ChangeNotifier {
       _proofState.startNewTask();
     }
 
+    // Clear the global position cache to prevent stale component inheritance
+    LogicCardComponent.clearCache();
+
     // Round-start triggers.
     final patch = _effectEngine.computePatch(
       cards: _shopState.owned,
@@ -435,8 +414,6 @@ class RunState extends ChangeNotifier {
       ),
     );
     _proofState.handsRemaining += patch.addHands;
-
-    _proofState.startNewTask();
   }
 
   void buyCard(dynamic card) {

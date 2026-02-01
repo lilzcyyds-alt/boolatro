@@ -70,6 +70,19 @@ class ProofStageComponent extends BoolatroComponent {
   }
 
   @override
+  void onMount() {
+    super.onMount();
+    runState.addListener(onStateChanged);
+    onStateChanged();
+  }
+
+  @override
+  void onRemove() {
+    runState.removeListener(onStateChanged);
+    super.onRemove();
+  }
+
+  @override
   void onStateChanged() {
     if (!isLoaded) return;
     
@@ -128,13 +141,8 @@ class ProofStageComponent extends BoolatroComponent {
           ..size = Vector2(cardWidth, cardHeight)
           ..anchor = Anchor.center;
 
-        // Use Global Registry for inheritance
-        final cachedPos = LogicCardComponent.getCachedPosition(id);
-        if (cachedPos != null) {
-          cardComp.position = cachedPos - absolutePosition;
-        } else {
-          cardComp.position = LogicCardComponent.getRandomOffscreenPosition(size);
-        }
+        // Directly position at target - simpler and more reliable
+        cardComp.position = targetPos;
 
         add(cardComp);
         cardMap[id] = cardComp;

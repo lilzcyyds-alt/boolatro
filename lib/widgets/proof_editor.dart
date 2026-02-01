@@ -138,9 +138,7 @@ class ProofEditor extends StatelessWidget {
                 const Spacer(),
                 ElevatedButton(
                   key: const Key('proof-submit'),
-                  onPressed: (proofState.isFirstSubmissionInSession || proofState.handsRemaining > 0)
-                      ? runState.submitProof
-                      : null,
+                  onPressed: runState.submitProof,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade800,
                     foregroundColor: Colors.white,

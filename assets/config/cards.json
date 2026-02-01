@@ -11,7 +11,7 @@
         "id": "alchemy_card_1",
         "name": "Alchemy",
         "imagePath": "assets/images/cards/alchemy.png",
-        "abilityDescription": "Boosts money gain from blinds.",
+        "abilityDescription": "Provides 3 bonus score for invalid proofs.",
         "category": "atomic",
         "cost": 6
     },
