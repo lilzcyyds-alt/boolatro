@@ -45,6 +45,19 @@ class PhaseInfoComponent extends BoolatroComponent {
   }
 
   @override
+  void onMount() {
+    super.onMount();
+    runState.addListener(onStateChanged);
+    onStateChanged();
+  }
+
+  @override
+  void onRemove() {
+    runState.removeListener(onStateChanged);
+    super.onRemove();
+  }
+
+  @override
   void onStateChanged() {
     if (!isLoaded || !isVisible || runState.phase == GamePhase.start) return;
     

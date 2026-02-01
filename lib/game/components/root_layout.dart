@@ -34,13 +34,12 @@ class RootLayoutComponent extends BoolatroComponent {
     stage = StageComponent()..size = Vector2(UIConfig.screenWidth, UIConfig.screenHeight);
     
     addAll([phaseInfo, jokerRow, scoringPanel, actionPanel, hand, stage]);
-    _layout();
   }
 
   void _layout() {
     if (!isLoaded) return;
 
-    final isStartPhase = runState.phase == GamePhase.start;
+    final isCleanPhase = runState.phase == GamePhase.start || runState.phase == GamePhase.defeat;
 
     // target positions in 1080p space based on UIConfig
     final targetPhaseInfoPos = UIConfig.phaseInfoPos;
@@ -53,20 +52,20 @@ class RootLayoutComponent extends BoolatroComponent {
     final targetStagePos = Vector2.zero();
 
     if (!_initialized) {
-      phaseInfo.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetPhaseInfoPos;
-      phaseInfo.isVisible = !isStartPhase;
+      phaseInfo.position = isCleanPhase ? UIConfig.getRandomOffscreenPosition() : targetPhaseInfoPos;
+      phaseInfo.isVisible = !isCleanPhase;
 
-      jokerRow.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetJokerPos;
-      jokerRow.isVisible = !isStartPhase;
+      jokerRow.position = isCleanPhase ? UIConfig.getRandomOffscreenPosition() : targetJokerPos;
+      jokerRow.isVisible = !isCleanPhase;
       
-      scoringPanel.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetScoringPos;
-      scoringPanel.isVisible = !isStartPhase;
+      scoringPanel.position = isCleanPhase ? UIConfig.getRandomOffscreenPosition() : targetScoringPos;
+      scoringPanel.isVisible = !isCleanPhase;
       
-      actionPanel.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetActionPos;
-      actionPanel.isVisible = !isStartPhase;
+      actionPanel.position = isCleanPhase ? UIConfig.getRandomOffscreenPosition() : targetActionPos;
+      actionPanel.isVisible = !isCleanPhase;
       
-      hand.position = isStartPhase ? UIConfig.getRandomOffscreenPosition() : targetHandPos;
-      hand.isVisible = !isStartPhase;
+      hand.position = isCleanPhase ? UIConfig.getRandomOffscreenPosition() : targetHandPos;
+      hand.isVisible = !isCleanPhase;
       
       stage.position = targetStagePos;
       stage.isVisible = true; 
@@ -75,7 +74,7 @@ class RootLayoutComponent extends BoolatroComponent {
       // Calculate offscreen targets for components flying OUT or origins for components flying IN
       final offscreenPos = UIConfig.getRandomOffscreenPosition();
 
-      if (isStartPhase) {
+      if (isCleanPhase) {
         // Flying OUT to random offscreen
         phaseInfo.flyTo(offscreenPos, isVisibleBefore: true, isVisibleAfter: false);
         jokerRow.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
@@ -121,9 +120,28 @@ class RootLayoutComponent extends BoolatroComponent {
     // Optional: Render subtle grid or dividers if needed, but the design doc emphasizes clean areas.
   }
 
+  GamePhase? _lastPhase;
+
+  @override
+  void onMount() {
+    super.onMount();
+    runState.addListener(onStateChanged);
+    onStateChanged();
+  }
+
+  @override
+  void onRemove() {
+    runState.removeListener(onStateChanged);
+    super.onRemove();
+  }
+
   @override
   void onStateChanged() {
     if (!isLoaded) return;
+    if (_lastPhase == runState.phase) return;
+    _lastPhase = runState.phase;
+    
+    print('[RootLayoutComponent] onStateChanged. Phase: ${runState.phase}');
     _layout();
   }
 }

@@ -42,6 +42,20 @@ abstract class BoolatroComponent extends PositionComponent with HasGameRef<Boola
 
   bool isVisible = true;
 
+  /// Recursively checks if this component and all its parents are visible.
+  bool get isEffectivelyVisible {
+    if (!isVisible) return false;
+    Component? p = parent;
+    while (p != null) {
+      if (p is BoolatroComponent && !p.isVisible) return false;
+      p = p.parent;
+    }
+    return true;
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) => isEffectivelyVisible && super.containsLocalPoint(point);
+
   @override
   void renderTree(Canvas canvas) {
     if (isVisible) {
@@ -52,23 +66,25 @@ abstract class BoolatroComponent extends PositionComponent with HasGameRef<Boola
   @override
   void onMount() {
     super.onMount();
-    runState.addListener(onStateChanged);
-    onStateChanged();
+    // Base component does NOT listen by default to avoid redundant updates.
+    // Subclasses like StageComponent and RootLayout will manually subscribe.
   }
 
   @override
   void onRemove() {
-    runState.removeListener(onStateChanged);
     super.onRemove();
   }
 
   void onStateChanged() {
-    // Override this to respond to state changes
+    // Override this to respond to state changes (manually subscribed)
   }
 }
 
 class BoolatroTextComponent extends TextComponent with Flyable {
   bool isVisible = true;
+
+  @override
+  bool containsLocalPoint(Vector2 point) => isVisible && super.containsLocalPoint(point);
 
   @override
   void renderTree(Canvas canvas) {

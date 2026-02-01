@@ -8,6 +8,7 @@ import 'stages/select_blind_stage.dart';
 import 'stages/proof_stage.dart';
 import 'stages/cashout_stage.dart';
 import 'stages/shop_stage.dart';
+import 'stages/defeat_stage.dart';
 
 class StageComponent extends BoolatroComponent {
   final Map<GamePhase, BoolatroComponent> _stageCache = {};
@@ -29,20 +30,34 @@ class StageComponent extends BoolatroComponent {
     _stageCache[GamePhase.proof] = ProofStageComponent()..size = Vector2(UIConfig.stageWidth, UIConfig.stageHeight);
     _stageCache[GamePhase.cashout] = CashoutStageComponent()..size = Vector2(UIConfig.stageWidth, UIConfig.stageHeight);
     _stageCache[GamePhase.shop] = ShopStageComponent()..size = Vector2(UIConfig.stageWidth, UIConfig.stageHeight);
+    _stageCache[GamePhase.defeat] = DefeatStageComponent()..size = Vector2(UIConfig.screenWidth, UIConfig.screenHeight);
 
+    await addAll(_stageCache.values);
     for (final stage in _stageCache.values) {
       stage.isVisible = false;
-      add(stage);
     }
+  }
+
+  @override
+  void onMount() {
+    super.onMount();
+    runState.addListener(onStateChanged);
+    onStateChanged();
+  }
+
+  @override
+  void onRemove() {
+    runState.removeListener(onStateChanged);
+    super.onRemove();
   }
 
   @override
   void onStateChanged() {
     if (!isLoaded) return;
-    if (_lastPhase != runState.phase) {
-      _lastPhase = runState.phase;
-      _updateStage();
-    }
+    if (_lastPhase == runState.phase) return;
+    _lastPhase = runState.phase;
+    
+    _updateStage();
   }
 
   void _updateStage() {
@@ -51,7 +66,7 @@ class StageComponent extends BoolatroComponent {
     if (nextStage == null) return;
     
     // Determine target Rect for the next stage based on UIConfig grid
-    final bool isFullPage = nextPhase == GamePhase.start;
+    final bool isFullPage = nextPhase == GamePhase.start || nextPhase == GamePhase.defeat;
     final targetPos = isFullPage ? Vector2.zero() : UIConfig.stagePos;
     final targetSize = isFullPage 
         ? Vector2(UIConfig.screenWidth, UIConfig.screenHeight) 

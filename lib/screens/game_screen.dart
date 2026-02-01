@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import '../game/boolatro_game.dart';
 import '../state/run_state.dart';
 import '../widgets/proof_editor.dart';
+import '../widgets/debug_panel.dart';
 
 
 
@@ -57,8 +58,15 @@ class _GameScreenState extends State<GameScreen> {
               },
             );
           },
+          'DebugPanel': (context, BoolatroGame game) {
+            return Positioned(
+              top: 10,
+              right: 10,
+              child: DebugPanel(runState: runState),
+            );
+          },
         },
-        initialActiveOverlays: const ['ProofEditor'],
+        initialActiveOverlays: const ['ProofEditor', 'DebugPanel'],
       ),
     );
   }

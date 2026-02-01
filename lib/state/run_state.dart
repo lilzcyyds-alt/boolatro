@@ -18,6 +18,7 @@ enum GamePhase {
   proof,
   cashout,
   shop,
+  defeat,
 }
 
 class RunState extends ChangeNotifier {
@@ -69,6 +70,8 @@ class RunState extends ChangeNotifier {
     _phase = GamePhase.start;
     _elapsedSeconds = 0;
     _lastDtSeconds = 0;
+    _shopState.money = 0; // Reset money on game over/restart
+    _shopState.owned.clear();
     _startBlind(resetBlind: true);
     notifyListeners();
   }
@@ -142,8 +145,7 @@ class RunState extends ChangeNotifier {
 
     if (_proofState.blindScore < _proofState.blindTargetScore &&
         _proofState.handsRemaining <= 0) {
-      _phase = GamePhase.cashout;
-      _cashoutPending = true;
+      _phase = GamePhase.defeat;
     }
 
     notifyListeners();
@@ -351,9 +353,8 @@ class RunState extends ChangeNotifier {
       _proofState.editorOpen = false;
     } else {
       if (_proofState.handsRemaining <= 0) {
-        // No hands left, forced cashout.
-        _phase = GamePhase.cashout;
-        _cashoutPending = true;
+        // No hands left, defeat.
+        _phase = GamePhase.defeat;
         _proofState.editorOpen = false;
       } else {
         // Not enough score, but hands remain.
@@ -424,6 +425,8 @@ class RunState extends ChangeNotifier {
         return GamePhase.shop;
       case GamePhase.shop:
         return GamePhase.selectBlind;
+      case GamePhase.defeat:
+        return GamePhase.start;
     }
   }
 }

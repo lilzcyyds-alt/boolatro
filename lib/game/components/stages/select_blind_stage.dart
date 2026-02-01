@@ -42,13 +42,15 @@ class SelectBlindStageComponent extends BoolatroComponent {
   }
 }
 
-class BlindCardComponent extends PositionComponent with TapCallbacks {
+class BlindCardComponent extends BoolatroComponent with TapCallbacks {
   final VoidCallback onPressed;
 
   BlindCardComponent({required this.onPressed});
 
   @override
   void onTapDown(TapDownEvent event) {
+    if (!isVisible) return;
+    
     // Only trigger if clicking within the button area
     final buttonRect = Rect.fromCenter(
       center: Offset(size.x / 2, size.y - 40),

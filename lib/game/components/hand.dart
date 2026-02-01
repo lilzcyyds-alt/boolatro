@@ -16,6 +16,19 @@ class HandComponent extends BoolatroComponent {
   final Set<int> _discardingIds = {};
 
   @override
+  void onMount() {
+    super.onMount();
+    runState.addListener(onStateChanged);
+    onStateChanged();
+  }
+
+  @override
+  void onRemove() {
+    runState.removeListener(onStateChanged);
+    super.onRemove();
+  }
+
+  @override
   void onStateChanged() {
     if (!isLoaded) return;
     _refreshHand();

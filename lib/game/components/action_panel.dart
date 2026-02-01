@@ -65,6 +65,19 @@ class ActionPanelComponent extends BoolatroComponent {
   }
 
   @override
+  void onMount() {
+    super.onMount();
+    runState.addListener(onStateChanged);
+    onStateChanged();
+  }
+
+  @override
+  void onRemove() {
+    runState.removeListener(onStateChanged);
+    super.onRemove();
+  }
+
+  @override
   void onStateChanged() {
     if (!isLoaded || !isVisible || runState.phase == GamePhase.start) return;
     
@@ -97,9 +110,14 @@ class GameButton extends BoolatroComponent with TapCallbacks {
     this.textRenderer,
   });
 
+  double _lastTapTime = 0;
+
   @override
   void onTapDown(TapDownEvent event) {
     if (isEnabled && isVisible) {
+      final now = DateTime.now().millisecondsSinceEpoch / 1000.0;
+      if (now - _lastTapTime < 0.5) return; // Debounce 0.5s
+      _lastTapTime = now;
       onPressed();
     }
   }

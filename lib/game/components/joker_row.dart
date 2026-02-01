@@ -10,6 +10,19 @@ class JokerRowComponent extends BoolatroComponent {
   final Map<int, JokerCardComponent> _jokerMap = {};
 
   @override
+  void onMount() {
+    super.onMount();
+    runState.addListener(onStateChanged);
+    onStateChanged();
+  }
+
+  @override
+  void onRemove() {
+    runState.removeListener(onStateChanged);
+    super.onRemove();
+  }
+
+  @override
   void onStateChanged() {
     if (!isLoaded) return;
     _refreshJokers();
