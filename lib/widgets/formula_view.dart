@@ -28,16 +28,19 @@ class FormulaView extends StatelessWidget {
     // Identify segments based on ruleContext
     final List<String> segments = _getSegments();
 
+    const double baseFontSize = 24.0;
+
     if (segments.isEmpty || !highlightSubFormulas) {
       return InkWell(
         onTap: isClickable ? () => onSegmentPressed?.call(sentence) : null,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: isClickable ? Colors.blue.withOpacity(0.2) : Colors.transparent,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(
               color: isClickable ? Colors.blue.withOpacity(0.5) : Colors.transparent,
+              width: 2,
             ),
           ),
           child: Text(
@@ -46,6 +49,7 @@ class FormulaView extends StatelessWidget {
             style: TextStyle(
               color: isClickable ? Colors.blueAccent : Colors.white,
               fontFamily: 'monospace',
+              fontSize: baseFontSize,
               fontWeight: isClickable ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -54,8 +58,9 @@ class FormulaView extends StatelessWidget {
     }
 
     return Wrap(
-      spacing: 4,
-      children: _buildInteractiveSegments(segments),
+      spacing: 8,
+      runSpacing: 8,
+      children: _buildInteractiveSegments(segments, baseFontSize),
     );
   }
 
@@ -113,7 +118,7 @@ class FormulaView extends StatelessWidget {
     return d;
   }
 
-  List<Widget> _buildInteractiveSegments(List<String> segments) {
+  List<Widget> _buildInteractiveSegments(List<String> segments, double fontSize) {
     final List<Widget> widgets = [];
     for (final segment in segments) {
       final isOperator = segment == '&' || segment == 'v' || segment == '~';
@@ -125,12 +130,13 @@ class FormulaView extends StatelessWidget {
         InkWell(
           onTap: interactive ? () => onSegmentPressed?.call(segment.trim()) : null,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: interactive ? Colors.blue.withOpacity(0.3) : Colors.transparent,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color: interactive ? Colors.blue : Colors.transparent,
+                width: 2,
               ),
             ),
             child: Text(
@@ -138,6 +144,7 @@ class FormulaView extends StatelessWidget {
               style: TextStyle(
                 color: interactive ? Colors.blueAccent : Colors.white,
                 fontFamily: 'monospace',
+                fontSize: fontSize,
                 fontWeight: interactive ? FontWeight.bold : FontWeight.normal,
               ),
             ),

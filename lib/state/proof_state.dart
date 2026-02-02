@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import '../boolatro/proof_core/play_card.dart';
 import '../boolatro/proof_core/proof_task_generator.dart';
@@ -45,6 +46,7 @@ class ProofState {
   int discardsRemaining = GameConfig.initialDiscards;
 
   bool editorOpen = false;
+  Offset? initialEditorPos;
   String? lastValidationMessage;
   bool? lastValidationPassed;
   int? lastScoreDelta;

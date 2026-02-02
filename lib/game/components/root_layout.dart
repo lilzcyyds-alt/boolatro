@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart' show Colors, Paint, LinearGradient, Alignment;
 import '../boolatro_component.dart';
+import 'editor_container.dart';
 import 'joker_row.dart';
 import 'scoring_panel.dart';
 import 'action_panel.dart';
@@ -18,8 +19,10 @@ class RootLayoutComponent extends BoolatroComponent {
   late final ActionPanelComponent actionPanel;
   late final HandComponent hand;
   late final StageComponent stage;
+  late final EditorContainerComponent editorContainer;
 
   bool _initialized = false;
+  bool? _lastEditorOpen;
 
   @override
   Future<void> onLoad() async {
@@ -32,14 +35,16 @@ class RootLayoutComponent extends BoolatroComponent {
     actionPanel = ActionPanelComponent()..size = Vector2(UIConfig.actionPanelWidth, UIConfig.actionPanelHeight);
     hand = HandComponent()..size = Vector2(UIConfig.handWidth, UIConfig.handHeight);
     stage = StageComponent()..size = Vector2(UIConfig.screenWidth, UIConfig.screenHeight);
+    editorContainer = EditorContainerComponent()..size = Vector2(UIConfig.editorPanelWidth, UIConfig.editorPanelHeight);
     
-    addAll([phaseInfo, jokerRow, scoringPanel, actionPanel, hand, stage]);
+    addAll([phaseInfo, jokerRow, scoringPanel, actionPanel, hand, stage, editorContainer]);
   }
 
   void _layout() {
     if (!isLoaded) return;
 
     final isCleanPhase = runState.phase == GamePhase.start || runState.phase == GamePhase.defeat;
+    final isEditorOpen = runState.proofState.editorOpen;
 
     // target positions in 1080p space based on UIConfig
     final targetPhaseInfoPos = UIConfig.phaseInfoPos;
@@ -68,37 +73,60 @@ class RootLayoutComponent extends BoolatroComponent {
       hand.isVisible = !isCleanPhase;
       
       stage.position = targetStagePos;
-      stage.isVisible = true; 
+      stage.isVisible = true;
+
+      editorContainer.position = UIConfig.getRandomOffscreenPosition();
+      editorContainer.isVisible = false;
+
       _initialized = true;
     } else {
-      // Calculate offscreen targets for components flying OUT or origins for components flying IN
-      final offscreenPos = UIConfig.getRandomOffscreenPosition();
-
       if (isCleanPhase) {
         // Flying OUT to random offscreen
-        phaseInfo.flyTo(offscreenPos, isVisibleBefore: true, isVisibleAfter: false);
+        phaseInfo.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
         jokerRow.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
         scoringPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
         actionPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
         hand.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
-      } else {
-        // Flying IN from current position (if it was offscreen) to target
-        // If we are coming from start phase, we might want to ensure they start at a random offscreen pos
-        // however flyTo usually moves from 'current' position.
-        // To ensure randomness on every 'in' transition:
-        if (!phaseInfo.isVisible) phaseInfo.position = UIConfig.getRandomOffscreenPosition();
-        if (!jokerRow.isVisible) jokerRow.position = UIConfig.getRandomOffscreenPosition();
-        if (!scoringPanel.isVisible) scoringPanel.position = UIConfig.getRandomOffscreenPosition();
-        if (!actionPanel.isVisible) actionPanel.position = UIConfig.getRandomOffscreenPosition();
-        if (!hand.isVisible) hand.position = UIConfig.getRandomOffscreenPosition();
-
+        editorContainer.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
+        // Stage stays at 0,0 but its children might hide.
+      } else if (isEditorOpen) {
+        // Editor is opening: stage, actionPanel, hand fly out. editorContainer flies in.
+        // phaseInfo, scoringPanel, jokerRow stay.
+        
+        stage.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleAfter: false);
+        actionPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleAfter: false);
+        hand.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleAfter: false);
+        
+        if (!editorContainer.isVisible) {
+          final initialPos = runState.proofState.initialEditorPos;
+          editorContainer.position = initialPos != null 
+              ? Vector2(initialPos.dx, initialPos.dy) 
+              : UIConfig.getRandomOffscreenPosition();
+        }
+        editorContainer.flyTo(UIConfig.editorPanelPos, isVisibleBefore: true, isVisibleAfter: true);
+        
         phaseInfo.flyTo(targetPhaseInfoPos, isVisibleBefore: true, isVisibleAfter: true);
         jokerRow.flyTo(targetJokerPos, isVisibleBefore: true, isVisibleAfter: true);
         scoringPanel.flyTo(targetScoringPos, isVisibleBefore: true, isVisibleAfter: true);
+      } else {
+        // Normal active phase, editor is closed.
+        // stage, actionPanel, hand fly in if they were hidden/offscreen.
+        // editorContainer flies out.
+        
+        if (!stage.isVisible) stage.position = UIConfig.getRandomOffscreenPosition();
+        if (!actionPanel.isVisible) actionPanel.position = UIConfig.getRandomOffscreenPosition();
+        if (!hand.isVisible) hand.position = UIConfig.getRandomOffscreenPosition();
+        
+        stage.flyTo(targetStagePos, isVisibleBefore: true, isVisibleAfter: true);
         actionPanel.flyTo(targetActionPos, isVisibleBefore: true, isVisibleAfter: true);
         hand.flyTo(targetHandPos, isVisibleBefore: true, isVisibleAfter: true);
+        
+        editorContainer.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleAfter: false);
+        
+        phaseInfo.flyTo(targetPhaseInfoPos, isVisibleBefore: true, isVisibleAfter: true);
+        jokerRow.flyTo(targetJokerPos, isVisibleBefore: true, isVisibleAfter: true);
+        scoringPanel.flyTo(targetScoringPos, isVisibleBefore: true, isVisibleAfter: true);
       }
-      // Stage doesn't move relative to root anymore
     }
   }
 
@@ -138,10 +166,14 @@ class RootLayoutComponent extends BoolatroComponent {
   @override
   void onStateChanged() {
     if (!isLoaded) return;
-    if (_lastPhase == runState.phase) return;
-    _lastPhase = runState.phase;
     
-    print('[RootLayoutComponent] onStateChanged. Phase: ${runState.phase}');
+    final currentEditorOpen = runState.proofState.editorOpen;
+    if (_lastPhase == runState.phase && _lastEditorOpen == currentEditorOpen) return;
+    
+    _lastPhase = runState.phase;
+    _lastEditorOpen = currentEditorOpen;
+    
+    print('[RootLayoutComponent] onStateChanged. Phase: ${runState.phase}, Editor: $currentEditorOpen');
     _layout();
   }
 }

@@ -18,11 +18,9 @@ class ProofEditor extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12, width: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,37 +32,38 @@ class ProofEditor extends StatelessWidget {
                   'PROOF EDITOR',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
+                    letterSpacing: 4,
                   ),
                 ),
               ),
               IconButton(
                 onPressed: runState.closeProofEditor,
-                icon: const Icon(Icons.close, color: Colors.white70),
+                icon: const Icon(Icons.close, color: Colors.white70, size: 32),
               ),
             ],
           ),
-          const Divider(color: Colors.white24, height: 16),
+          const Divider(color: Colors.white24, height: 32, thickness: 2),
           Wrap(
-            spacing: 16,
+            spacing: 32,
+            runSpacing: 16,
             children: [
               Text(
                 'TARGET: ${proofState.blindTargetScore}',
-                style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Colors.white54, fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Text(
                 'SCORE: ${proofState.blindScore}',
-                style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Colors.white54, fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Text(
                 'HANDS: ${proofState.handsRemaining}',
-                style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Colors.white54, fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -112,10 +111,12 @@ class ProofEditor extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          const SizedBox(height: 12),
+          const SizedBox(height: 24),
           if (proofState.step == EditorStep.idle)
-            Row(
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 ElevatedButton(
                   key: const Key('proof-add-line'),
@@ -123,26 +124,31 @@ class ProofEditor extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade800,
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   child: const Text('ADD LINE'),
                 ),
-                const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: runState.clearProofEditor,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white54,
-                    side: const BorderSide(color: Colors.white24),
+                    side: const BorderSide(color: Colors.white24, width: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    textStyle: const TextStyle(fontSize: 20),
                   ),
                   child: const Text('CLEAR'),
                 ),
-                const Spacer(),
+                // Using a Container with width to simulate spacer in Wrap if needed, 
+                // but usually Wrap is better left to flow.
                 ElevatedButton(
                   key: const Key('proof-submit'),
                   onPressed: runState.submitProof,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade800,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                    textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   child: const Text('SUBMIT'),
                 ),
@@ -237,30 +243,36 @@ class _LineItem extends StatelessWidget {
         children: [
             Row(
               children: [
-                Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                Text(label, style: const TextStyle(color: Colors.white38, fontSize: 18, fontWeight: FontWeight.bold)),
                 if (isFixed && (rule == null || rule!.isEmpty)) ...[
                   const SizedBox(width: 8),
                   Text('CONCLUSION',
-                      style: TextStyle(color: Colors.orange.shade300, fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      style: TextStyle(color: Colors.orange.shade300, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
                 ],
                 if (rule != null && rule!.isNotEmpty) ...[
                   const SizedBox(width: 8),
-                  Text(rule!.toUpperCase(), style: const TextStyle(color: Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                  Text(rule!.toUpperCase(), style: const TextStyle(color: Colors.blueAccent, fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
                 if (citations != null && citations!.isNotEmpty) ...[
                   const SizedBox(width: 8),
-                  Text('($citations)', style: const TextStyle(color: Colors.white24, fontSize: 10)),
+                  Text('($citations)', style: const TextStyle(color: Colors.white24, fontSize: 18)),
                 ],
                 const Spacer(),
+                if (onJustify != null && activeLineId == null)
+                  TextButton(
+                    onPressed: onJustify,
+                    child: const Text('JUSTIFY',
+                        style: TextStyle(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+                  ),
                 if (activeLineId != null && activeLineId == currentLineId)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.blue.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.blueAccent),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.blueAccent, width: 2),
                     ),
-                    child: const Text('EDITING', style: TextStyle(color: Colors.blueAccent, fontSize: 8, fontWeight: FontWeight.bold)),
+                    child: const Text('EDITING', style: TextStyle(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.bold)),
                   ),
               ],
             ),
@@ -290,30 +302,36 @@ class _RulePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Text('SELECT RULE', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+              const Text('SELECT RULE', style: TextStyle(color: Colors.white70, fontSize: 20, fontWeight: FontWeight.bold)),
               const Spacer(),
-              TextButton(onPressed: onCancel, child: const Text('CANCEL', style: TextStyle(color: Colors.redAccent, fontSize: 10))),
+              TextButton(
+                onPressed: onCancel,
+                child: const Text('CANCEL', style: TextStyle(color: Colors.redAccent, fontSize: 18)),
+              ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Wrap(
-            spacing: 8,
+            spacing: 16,
+            runSpacing: 12,
             children: _rules.map((rule) => ElevatedButton(
               onPressed: () => onRuleSelected(rule),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueGrey.shade900,
                 foregroundColor: Colors.white,
-                textStyle: const TextStyle(fontSize: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               child: Text(rule),
             )).toList(),
@@ -339,18 +357,21 @@ class _SourceSelectionHeader extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.blue.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.withOpacity(0.3), width: 2),
       ),
       child: Row(
         children: [
           Expanded(
-            child: Text(msg, style: const TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+            child: Text(msg, style: const TextStyle(color: Colors.blueAccent, fontSize: 20, fontWeight: FontWeight.bold)),
           ),
-          TextButton(onPressed: onCancel, child: const Text('CANCEL', style: TextStyle(color: Colors.redAccent, fontSize: 10))),
+          TextButton(
+            onPressed: onCancel,
+            child: const Text('CANCEL', style: TextStyle(color: Colors.redAccent, fontSize: 18)),
+          ),
         ],
       ),
     );

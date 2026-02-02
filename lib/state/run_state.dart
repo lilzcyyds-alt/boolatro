@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 
 import '../boolatro/proof_core/play_card.dart';
@@ -164,10 +165,11 @@ class RunState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void openProofEditor() {
+  void openProofEditor({Offset? initialPos}) {
     if (_proofState.hasConclusion && _proofState.handsRemaining > 0) {
       _proofState.handsRemaining--;
       _proofState.editorOpen = true;
+      _proofState.initialEditorPos = initialPos;
       _proofState.sessionSubmitted = false;
 
       // Always ensure we have a fresh conclusion line for this proof attempt

@@ -21,7 +21,9 @@ class ActionPanelComponent extends BoolatroComponent {
     add(editButton = GameButton(
       label: 'EDIT PROOF',
       color: GameStyles.money, 
-      onPressed: () => runState.openProofEditor(),
+      onPressed: () => runState.openProofEditor(
+        initialPos: UIConfig.getRandomOffscreenPosition().toOffset(),
+      ),
     )
       ..size = Vector2(buttonWidth, buttonHeight)
       ..position = Vector2(size.x / 2, size.y / 2 - buttonHeight * 1.5 - spacing * 1.5)
