@@ -87,42 +87,33 @@ class RootLayoutComponent extends BoolatroComponent {
         scoringPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
         actionPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
         hand.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
-        editorContainer.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
+        // editorContainer is now handled entirely by Flutter overlay - keep it hidden
         // Stage stays at 0,0 but its children might hide.
       } else if (isEditorOpen) {
-        // Editor is opening: stage, actionPanel, hand fly out. editorContainer flies in.
+        // Editor is opening: stage, actionPanel, hand fly out.
+        // editorContainer is now handled entirely by Flutter overlay - keep it hidden
         // phaseInfo, scoringPanel, jokerRow stay.
-        
+
         stage.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleAfter: false);
         actionPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleAfter: false);
         hand.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleAfter: false);
-        
-        if (!editorContainer.isVisible) {
-          final initialPos = runState.proofState.initialEditorPos;
-          editorContainer.position = initialPos != null 
-              ? Vector2(initialPos.dx, initialPos.dy) 
-              : UIConfig.getRandomOffscreenPosition();
-        }
-        editorContainer.flyTo(UIConfig.editorPanelPos, isVisibleBefore: true, isVisibleAfter: true);
-        
+
         phaseInfo.flyTo(targetPhaseInfoPos, isVisibleBefore: true, isVisibleAfter: true);
         jokerRow.flyTo(targetJokerPos, isVisibleBefore: true, isVisibleAfter: true);
         scoringPanel.flyTo(targetScoringPos, isVisibleBefore: true, isVisibleAfter: true);
       } else {
         // Normal active phase, editor is closed.
         // stage, actionPanel, hand fly in if they were hidden/offscreen.
-        // editorContainer flies out.
-        
+        // editorContainer is now handled entirely by Flutter overlay - keep it hidden
+
         if (!stage.isVisible) stage.position = UIConfig.getRandomOffscreenPosition();
         if (!actionPanel.isVisible) actionPanel.position = UIConfig.getRandomOffscreenPosition();
         if (!hand.isVisible) hand.position = UIConfig.getRandomOffscreenPosition();
-        
+
         stage.flyTo(targetStagePos, isVisibleBefore: true, isVisibleAfter: true);
         actionPanel.flyTo(targetActionPos, isVisibleBefore: true, isVisibleAfter: true);
         hand.flyTo(targetHandPos, isVisibleBefore: true, isVisibleAfter: true);
-        
-        editorContainer.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleAfter: false);
-        
+
         phaseInfo.flyTo(targetPhaseInfoPos, isVisibleBefore: true, isVisibleAfter: true);
         jokerRow.flyTo(targetJokerPos, isVisibleBefore: true, isVisibleAfter: true);
         scoringPanel.flyTo(targetScoringPos, isVisibleBefore: true, isVisibleAfter: true);

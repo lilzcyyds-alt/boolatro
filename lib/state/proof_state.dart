@@ -51,6 +51,8 @@ class ProofState {
   bool? lastValidationPassed;
   int? lastScoreDelta;
   bool sessionSubmitted = false;
+  bool showingValidationPopup = false;
+  bool isClosing = false;
 
   // Guided flow state
   EditorStep step = EditorStep.idle;
@@ -127,6 +129,8 @@ class ProofState {
     lastValidationMessage = null;
     lastValidationPassed = null;
     lastScoreDelta = null;
+    showingValidationPopup = false;
+    isClosing = false;
 
     step = EditorStep.idle;
     activeLineId = null;

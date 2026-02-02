@@ -12,16 +12,18 @@ class ProofEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     final ProofState proofState = runState.proofState;
     final String premise = proofState.premise ?? '';
-    final resultMessage = proofState.lastValidationMessage;
-    final resultValid = proofState.lastValidationPassed;
-    final scoreDelta = proofState.lastScoreDelta;
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24, width: 3),
       ),
+      child: Stack(
+        children: [
+          Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -38,32 +40,14 @@ class ProofEditor extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: runState.closeProofEditor,
-                icon: const Icon(Icons.close, color: Colors.white70, size: 32),
-              ),
+              if (!proofState.showingValidationPopup)
+                IconButton(
+                  onPressed: runState.closeProofEditor,
+                  icon: const Icon(Icons.close, color: Colors.white70, size: 32),
+                ),
             ],
           ),
           const Divider(color: Colors.white24, height: 32, thickness: 2),
-          Wrap(
-            spacing: 32,
-            runSpacing: 16,
-            children: [
-              Text(
-                'TARGET: ${proofState.blindTargetScore}',
-                style: const TextStyle(color: Colors.white54, fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                'SCORE: ${proofState.blindScore}',
-                style: const TextStyle(color: Colors.white54, fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                'HANDS: ${proofState.handsRemaining}',
-                style: const TextStyle(color: Colors.white54, fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -92,9 +76,6 @@ class ProofEditor extends StatelessWidget {
                         ruleContext: proofState.pendingRule,
                         onPressed: (seg) => runState.pickFormulaSegment(seg, index + 2),
                         isFixed: line.isFixed,
-                        onJustify: line.isFixed ? null : () => runState.startJustifyLineFlow(line.id), // No justify for fixed
-                        activeLineId: proofState.activeLineId,
-                        currentLineId: line.id,
                         isSourceable: !line.isFixed, // Conclusion cannot be a source
                       );
                     },
@@ -112,7 +93,7 @@ class ProofEditor extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          if (proofState.step == EditorStep.idle)
+          if (proofState.step == EditorStep.idle && !proofState.showingValidationPopup)
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -165,37 +146,16 @@ class ProofEditor extends StatelessWidget {
                selectedCount: proofState.selectedSources.length,
                onCancel: runState.cancelGuidedFlow,
              ),
-          if (resultMessage != null && resultValid != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: (resultValid ? Colors.green : Colors.red).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: (resultValid ? Colors.green : Colors.red).withOpacity(0.3),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${resultValid ? 'VALID' : 'INVALID'}: $resultMessage',
-                    style: TextStyle(
-                      color: resultValid ? Colors.greenAccent : Colors.redAccent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (scoreDelta != null)
-                    Text(
-                      'Score +$scoreDelta',
-                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                    ),
-                ],
-              ),
-            ),
-          ],
+        ],
+      ),
+        ),
+        // Validation popup overlay
+        if (proofState.showingValidationPopup)
+          _ValidationPopup(
+            isValid: proofState.lastValidationPassed ?? false,
+            message: proofState.lastValidationMessage ?? '',
+            scoreDelta: proofState.lastScoreDelta,
+          ),
         ],
       ),
     );
@@ -213,9 +173,6 @@ class _LineItem extends StatelessWidget {
     this.onPressed,
     this.textKey,
     this.isFixed = false,
-    this.onJustify,
-    this.activeLineId,
-    this.currentLineId,
     this.isSourceable = true,
     super.key,
   });
@@ -229,9 +186,6 @@ class _LineItem extends StatelessWidget {
   final Function(String)? onPressed;
   final Key? textKey;
   final bool isFixed;
-  final VoidCallback? onJustify;
-  final int? activeLineId;
-  final int? currentLineId;
   final bool isSourceable;
 
   @override
@@ -257,23 +211,6 @@ class _LineItem extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text('($citations)', style: const TextStyle(color: Colors.white24, fontSize: 18)),
                 ],
-                const Spacer(),
-                if (onJustify != null && activeLineId == null)
-                  TextButton(
-                    onPressed: onJustify,
-                    child: const Text('JUSTIFY',
-                        style: TextStyle(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.bold)),
-                  ),
-                if (activeLineId != null && activeLineId == currentLineId)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.blueAccent, width: 2),
-                    ),
-                    child: const Text('EDITING', style: TextStyle(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.bold)),
-                  ),
               ],
             ),
            const SizedBox(height: 4),
@@ -373,6 +310,76 @@ class _SourceSelectionHeader extends StatelessWidget {
             child: const Text('CANCEL', style: TextStyle(color: Colors.redAccent, fontSize: 18)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ValidationPopup extends StatelessWidget {
+  const _ValidationPopup({
+    required this.isValid,
+    required this.message,
+    this.scoreDelta,
+  });
+
+  final bool isValid;
+  final String message;
+  final int? scoreDelta;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.95),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isValid ? Colors.green : Colors.red,
+            width: 3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: (isValid ? Colors.green : Colors.red).withOpacity(0.3),
+              blurRadius: 20,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isValid ? 'VALID' : 'INVALID',
+              style: TextStyle(
+                color: isValid ? Colors.greenAccent : Colors.redAccent,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 18,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (scoreDelta != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                '+$scoreDelta',
+                style: TextStyle(
+                  color: isValid ? Colors.greenAccent : Colors.orangeAccent,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

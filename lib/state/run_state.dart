@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
@@ -172,9 +173,9 @@ class RunState extends ChangeNotifier {
       _proofState.initialEditorPos = initialPos;
       _proofState.sessionSubmitted = false;
 
-      // Always ensure we have a fresh conclusion line for this proof attempt
-      // Remove any stale conclusion lines from previous attempts
-      _proofState.proofLines.removeWhere((l) => l.isFixed);
+      // Always ensure we have a fresh state for this proof attempt
+      // Clear all proof lines from previous attempts
+      _proofState.proofLines.clear();
       _proofState.addProofLine(
         isFixed: true,
         sentence: _proofState.conclusionText,
@@ -192,6 +193,8 @@ class RunState extends ChangeNotifier {
     _proofState.activeLineId = null;
     _proofState.pendingRule = null;
     _proofState.selectedSources.clear();
+    _proofState.showingValidationPopup = false;
+    _proofState.isClosing = false;
 
     if (_proofState.blindScore < _proofState.blindTargetScore &&
         _proofState.handsRemaining <= 0) {
@@ -397,10 +400,18 @@ class RunState extends ChangeNotifier {
       } else {
         _currentBlindIndex++;
       }
-    } else {
     }
 
-    closeProofEditor();
+    // Show validation popup, wait 2 seconds, then close with fly-out animation
+    _proofState.showingValidationPopup = true;
+    notifyListeners();
+
+    Future.delayed(const Duration(seconds: 2), () {
+      _proofState.showingValidationPopup = false;
+      _proofState.isClosing = true;
+      notifyListeners();
+    });
+
     return result;
   }
 

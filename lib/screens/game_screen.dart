@@ -7,6 +7,197 @@ import '../state/run_state.dart';
 import '../widgets/proof_editor.dart';
 import '../widgets/debug_panel.dart';
 
+class _ProofEditorOverlay extends StatefulWidget {
+  const _ProofEditorOverlay({required this.runState});
+
+  final RunState runState;
+
+  @override
+  State<_ProofEditorOverlay> createState() => _ProofEditorOverlayState();
+}
+
+class _ProofEditorOverlayState extends State<_ProofEditorOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _flyOutController;
+  late Animation<Offset> _flyOutAnimation;
+  Offset? _currentPosition;
+  Offset? _flyOutTarget;
+  bool _hasFlyOutStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _flyOutController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _flyOutController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        widget.runState.closeProofEditor();
+        _hasFlyOutStarted = false;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _flyOutController.dispose();
+    super.dispose();
+  }
+
+  Offset _getRandomOffscreenPosition(double screenWidth, double screenHeight) {
+    final rand = math.Random();
+    final double angle = rand.nextDouble() * 2 * math.pi;
+    const double dist = 2500.0;
+    return Offset(
+      screenWidth / 2 + math.cos(angle) * dist,
+      screenHeight / 2 + math.sin(angle) * dist,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return ListenableBuilder(
+          listenable: widget.runState,
+          builder: (context, _) {
+            final proofState = widget.runState.proofState;
+
+            if (!proofState.editorOpen) {
+              return const SizedBox.shrink();
+            }
+
+            // Map virtual 1920x1080 to physical screen coordinates
+            const virtualW = UIConfig.screenWidth;
+            const virtualH = UIConfig.screenHeight;
+
+            final scale = math.min(
+              constraints.maxWidth / virtualW,
+              constraints.maxHeight / virtualH,
+            );
+
+            final offsetX = (constraints.maxWidth - virtualW * scale) / 2;
+            final offsetY = (constraints.maxHeight - virtualH * scale) / 2;
+
+            final panelPos = UIConfig.editorPanelPos;
+            final panelW = UIConfig.editorPanelWidth;
+            final panelH = UIConfig.editorPanelHeight;
+
+            final targetX = offsetX + panelPos.x * scale;
+            final targetY = offsetY + panelPos.y * scale;
+            final targetPos = Offset(targetX, targetY);
+
+            // Handle fly-out animation
+            if (proofState.isClosing && !_hasFlyOutStarted) {
+              _hasFlyOutStarted = true;
+              _currentPosition = targetPos;
+              _flyOutTarget = _getRandomOffscreenPosition(
+                constraints.maxWidth,
+                constraints.maxHeight,
+              );
+              _flyOutAnimation = Tween<Offset>(
+                begin: _currentPosition,
+                end: _flyOutTarget,
+              ).animate(CurvedAnimation(
+                parent: _flyOutController,
+                curve: Curves.easeInCubic,
+              ));
+              _flyOutController.forward(from: 0);
+            }
+
+            // Fly-out animation in progress
+            if (_hasFlyOutStarted) {
+              return AnimatedBuilder(
+                animation: _flyOutAnimation,
+                builder: (context, child) {
+                  return Stack(
+                    children: [
+                      Positioned(
+                        left: _flyOutAnimation.value.dx,
+                        top: _flyOutAnimation.value.dy,
+                        width: panelW * scale,
+                        height: panelH * scale,
+                        child: child!,
+                      ),
+                    ],
+                  );
+                },
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: SizedBox(
+                    width: panelW,
+                    height: panelH,
+                    child: ProofEditor(runState: widget.runState),
+                  ),
+                ),
+              );
+            }
+
+            final initialVirtualPos = proofState.initialEditorPos;
+
+            // No initial position - just show at target
+            if (initialVirtualPos == null) {
+              return Stack(
+                children: [
+                  Positioned(
+                    left: targetX,
+                    top: targetY,
+                    width: panelW * scale,
+                    height: panelH * scale,
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: SizedBox(
+                        width: panelW,
+                        height: panelH,
+                        child: ProofEditor(runState: widget.runState),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            // Fly-in animation
+            final startX = offsetX + initialVirtualPos.dx * scale;
+            final startY = offsetY + initialVirtualPos.dy * scale;
+
+            return Stack(
+              children: [
+                TweenAnimationBuilder<Offset>(
+                  tween: Tween<Offset>(
+                    begin: Offset(startX, startY),
+                    end: targetPos,
+                  ),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, pos, child) {
+                    return Positioned(
+                      left: pos.dx,
+                      top: pos.dy,
+                      width: panelW * scale,
+                      height: panelH * scale,
+                      child: child!,
+                    );
+                  },
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: SizedBox(
+                      width: panelW,
+                      height: panelH,
+                      child: ProofEditor(runState: widget.runState),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
 
 
 class GameScreen extends StatefulWidget {
@@ -45,92 +236,7 @@ class _GameScreenState extends State<GameScreen> {
         game: _game,
         overlayBuilderMap: {
           'ProofEditor': (context, BoolatroGame game) {
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                return ListenableBuilder(
-                  listenable: runState,
-                  builder: (context, _) {
-                    if (!runState.proofState.editorOpen) {
-                      return const SizedBox.shrink();
-                    }
-
-                    // Map virtual 1920x1080 to physical screen coordinates
-                    const virtualW = UIConfig.screenWidth;
-                    const virtualH = UIConfig.screenHeight;
-
-                    final scale = math.min(
-                      constraints.maxWidth / virtualW,
-                      constraints.maxHeight / virtualH,
-                    );
-
-                    final offsetX = (constraints.maxWidth - virtualW * scale) / 2;
-                    final offsetY = (constraints.maxHeight - virtualH * scale) / 2;
-
-                    final panelPos = UIConfig.editorPanelPos;
-                    final panelW = UIConfig.editorPanelWidth;
-                    final panelH = UIConfig.editorPanelHeight;
-
-                    final initialVirtualPos = runState.proofState.initialEditorPos;
-                    final targetX = offsetX + panelPos.x * scale;
-                    final targetY = offsetY + panelPos.y * scale;
-
-                    if (initialVirtualPos == null) {
-                      return Stack(
-                        children: [
-                          Positioned(
-                            left: targetX,
-                            top: targetY,
-                            width: panelW * scale,
-                            height: panelH * scale,
-                            child: FittedBox(
-                              fit: BoxFit.contain,
-                              child: SizedBox(
-                                width: panelW,
-                                height: panelH,
-                                child: ProofEditor(runState: runState),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-
-                    final startX = offsetX + initialVirtualPos.dx * scale;
-                    final startY = offsetY + initialVirtualPos.dy * scale;
-
-                    return Stack(
-                      children: [
-                        TweenAnimationBuilder<Offset>(
-                          tween: Tween<Offset>(
-                            begin: Offset(startX, startY),
-                            end: Offset(targetX, targetY),
-                          ),
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeOutCubic,
-                          builder: (context, pos, child) {
-                            return Positioned(
-                              left: pos.dx,
-                              top: pos.dy,
-                              width: panelW * scale,
-                              height: panelH * scale,
-                              child: child!,
-                            );
-                          },
-                          child: FittedBox(
-                            fit: BoxFit.contain,
-                            child: SizedBox(
-                              width: panelW,
-                              height: panelH,
-                              child: ProofEditor(runState: runState),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            );
+            return _ProofEditorOverlay(runState: runState);
           },
           'DebugPanel': (context, BoolatroGame game) {
             return Positioned(
