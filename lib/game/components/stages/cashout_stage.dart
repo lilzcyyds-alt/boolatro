@@ -7,26 +7,12 @@ import '../../styles.dart';
 import '../action_panel.dart';
 
 class CashoutStageComponent extends BoolatroComponent {
-  late final TextComponent titleText;
   late final TextComponent scoreText;
   late final TextComponent rewardText;
   late final GameButton collectButton;
 
   @override
   Future<void> onLoad() async {
-    titleText = TextComponent(
-      text: 'CASHOUT',
-      textRenderer: TextPaint(
-        style: const TextStyle(
-          color: Colors.green,
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 4,
-        ),
-      ),
-      anchor: Anchor.center,
-    );
-
     scoreText = TextComponent(
       text: '',
       textRenderer: GameStyles.valueSmall,
@@ -47,7 +33,7 @@ class CashoutStageComponent extends BoolatroComponent {
       ..size = Vector2(200, 50)
       ..anchor = Anchor.center;
 
-    addAll([titleText, scoreText, rewardText, collectButton]);
+    addAll([scoreText, rewardText, collectButton]);
     onStateChanged();
   }
 
@@ -63,7 +49,6 @@ class CashoutStageComponent extends BoolatroComponent {
   }
 
   void _layout() {
-    titleText.position = Vector2(size.x / 2, 60);
     scoreText.position = Vector2(size.x / 2, 130);
     rewardText.position = Vector2(size.x / 2, 170);
     collectButton.position = Vector2(size.x / 2, 250);

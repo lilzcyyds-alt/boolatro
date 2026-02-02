@@ -25,6 +25,25 @@ enum GamePhase {
   defeat,
 }
 
+extension GamePhaseExtension on GamePhase {
+  String get displayName {
+    switch (this) {
+      case GamePhase.start:
+        return 'START';
+      case GamePhase.selectBlind:
+        return 'SELECT BLIND';
+      case GamePhase.proof:
+        return 'PROOF';
+      case GamePhase.cashout:
+        return 'CASHOUT';
+      case GamePhase.shop:
+        return 'SHOP';
+      case GamePhase.defeat:
+        return 'DEFEAT';
+    }
+  }
+}
+
 class RunState extends ChangeNotifier {
   GamePhase _phase = GamePhase.start;
   double _elapsedSeconds = 0;
@@ -149,6 +168,7 @@ class RunState extends ChangeNotifier {
     if (_proofState.hasConclusion && _proofState.handsRemaining > 0) {
       _proofState.handsRemaining--;
       _proofState.editorOpen = true;
+      _proofState.sessionSubmitted = false;
 
       // Always ensure we have a fresh conclusion line for this proof attempt
       // Remove any stale conclusion lines from previous attempts
@@ -314,6 +334,9 @@ class RunState extends ChangeNotifier {
   }
 
   ProofValidationResult submitProof() {
+    if (_proofState.sessionSubmitted) return const ProofValidationResult(false, 'Already submitted');
+    _proofState.sessionSubmitted = true;
+
     final proofLines = _proofState.proofLines
         .map(
           (draft) => ProofLine(

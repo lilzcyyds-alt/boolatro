@@ -8,17 +8,10 @@ import '../../styles.dart';
 import '../../systems/blind_system.dart';
 
 class SelectBlindStageComponent extends BoolatroComponent {
-  late final TextComponent titleText;
   final List<BlindCardComponent> blindCards = [];
 
   @override
   Future<void> onLoad() async {
-    add(titleText = TextComponent(
-      text: 'SELECT BLIND',
-      textRenderer: GameStyles.title,
-      anchor: Anchor.center,
-    ));
-
     final blinds = BlindSystem.blinds;
     for (var i = 0; i < blinds.length; i++) {
       final card = BlindCardComponent(
@@ -33,7 +26,7 @@ class SelectBlindStageComponent extends BoolatroComponent {
       add(card);
     }
 
-    _layout();
+    _layout(animate: false);
   }
 
   @override
@@ -52,13 +45,10 @@ class SelectBlindStageComponent extends BoolatroComponent {
   @override
   void onStateChanged() {
     if (!isLoaded) return;
-    _layout();
+    _layout(animate: true);
   }
 
-  void _layout() {
-    titleText.text = 'ANTE ${runState.currentAnte} - SELECT BLIND';
-    titleText.position = Vector2(size.x / 2, 60);
-
+  void _layout({bool animate = true}) {
     final currentIndex = runState.currentBlindIndex;
     final cardWidth = 300.0;
     final spacing = 40.0;
@@ -68,25 +58,37 @@ class SelectBlindStageComponent extends BoolatroComponent {
     for (var i = 0; i < blindCards.length; i++) {
       final card = blindCards[i];
       double targetY;
+      double targetOpacity;
+      bool targetActive;
       
       if (i < currentIndex) {
         // Skipped
         targetY = size.y / 2 + 150;
-        card.opacity = 0.5;
-        card.isActive = false;
+        targetOpacity = 0.5;
+        targetActive = false;
       } else if (i == currentIndex) {
         // Current
-        targetY = size.y / 2 - 80;
-        card.opacity = 1.0;
-        card.isActive = true;
+        targetY = size.y / 2 - 40;
+        targetOpacity = 1.0;
+        targetActive = true;
       } else {
         // Pending
         targetY = size.y / 2 + 100;
-        card.opacity = 0.7;
-        card.isActive = false;
+        targetOpacity = 0.7;
+        targetActive = false;
       }
 
-      card.position = Vector2(startX + i * (cardWidth + spacing), targetY);
+      final targetPos = Vector2(startX + i * (cardWidth + spacing), targetY);
+      
+      if (animate && isMounted) {
+        card.flyTo(targetPos, duration: 0.4);
+        card.fadeTo(targetOpacity, duration: 0.4);
+        card.isActive = targetActive;
+      } else {
+        card.position = targetPos;
+        card.opacity = targetOpacity;
+        card.isActive = targetActive;
+      }
     }
   }
 }
@@ -96,7 +98,6 @@ class BlindCardComponent extends BoolatroComponent {
   final VoidCallback onSelect;
   final VoidCallback onSkip;
   
-  double opacity = 1.0;
   bool _isActive = false;
   
   set isActive(bool value) {
@@ -186,7 +187,9 @@ class BlindCardComponent extends BoolatroComponent {
   void render(Canvas canvas) {
     canvas.save();
     if (opacity < 1.0) {
-      canvas.saveLayer(size.toRect(), Paint()..color = Colors.white.withOpacity(opacity));
+      // Use a larger rect to include buttons that are outside the card's local size
+      final layerRect = Rect.fromLTWH(-50, -50, size.x + 100, size.y + 250);
+      canvas.saveLayer(layerRect, Paint()..color = Colors.white.withOpacity(opacity));
     }
 
     final rect = RRect.fromRectAndRadius(

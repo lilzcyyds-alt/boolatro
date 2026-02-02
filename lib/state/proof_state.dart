@@ -48,6 +48,7 @@ class ProofState {
   String? lastValidationMessage;
   bool? lastValidationPassed;
   int? lastScoreDelta;
+  bool sessionSubmitted = false;
 
   // Guided flow state
   EditorStep step = EditorStep.idle;
@@ -129,6 +130,7 @@ class ProofState {
     activeLineId = null;
     pendingRule = null;
     selectedSources.clear();
+    sessionSubmitted = false;
 
     _nextLineId = 1;
     // _nextCardId is NOT reset - use monotonically increasing IDs across blinds

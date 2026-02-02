@@ -8,18 +8,11 @@ import '../action_panel.dart';
 
 class ShopStageComponent extends BoolatroComponent {
   final List<ShopItemComponent> _items = [];
-  late final BoolatroTextComponent titleText;
   late final BoolatroTextComponent soldOutText;
   late final GameButton backButton;
 
   @override
   Future<void> onLoad() async {
-    add(titleText = BoolatroTextComponent(
-      text: 'SHOP',
-      textRenderer: GameStyles.title,
-      anchor: Anchor.center,
-    ));
-
     add(soldOutText = BoolatroTextComponent(
       text: 'SOLD OUT',
       textRenderer: GameStyles.valueLarge,
@@ -45,7 +38,6 @@ class ShopStageComponent extends BoolatroComponent {
   }
 
   void _layout() {
-    titleText.position = Vector2(size.x / 2, 60);
     soldOutText.position = size / 2;
     backButton.position = Vector2(size.x / 2, size.y - 70);
   }

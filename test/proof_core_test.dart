@@ -1,8 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:boolatro/boolatro/proof_core/proof_core.dart';
+import 'package:boolatro/game/game_config.dart';
 
 void main() {
+  setUpAll(() {
+    GameConfig.allowedAtoms = ['P', 'Q', 'R', 'S', 'T'];
+  });
+
   group('ProofValidator WFF', () {
     test('accepts valid formulas', () {
       final valid = [

@@ -61,6 +61,6 @@ class PhaseInfoComponent extends BoolatroComponent {
   void onStateChanged() {
     if (!isLoaded || !isVisible || runState.phase == GamePhase.start) return;
     
-    phaseValue.text = runState.phase.name.toUpperCase();
+    phaseValue.text = runState.phase.displayName;
   }
 }

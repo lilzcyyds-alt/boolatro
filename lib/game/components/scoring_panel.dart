@@ -6,6 +6,7 @@ import '../styles.dart';
 import '../../state/run_state.dart';
 
 class ScoringPanelComponent extends BoolatroComponent {
+  late final TextComponent anteValue;
   late final TextComponent moneyText;
   late final TextComponent scoreText;
   late final TextComponent targetText;
@@ -14,6 +15,7 @@ class ScoringPanelComponent extends BoolatroComponent {
 
   @override
   Future<void> onLoad() async {
+    add(anteValue = TextComponent(text: '1', textRenderer: GameStyles.valueSmall, anchor: Anchor.centerRight));
     add(moneyText = TextComponent(text: '\$0', textRenderer: GameStyles.valueSmall, anchor: Anchor.centerRight));
     add(scoreText = TextComponent(text: '0', textRenderer: GameStyles.valueLarge, anchor: Anchor.center));
     add(targetText = TextComponent(text: 'Target: 0', textRenderer: GameStyles.label, anchor: Anchor.center));
@@ -59,6 +61,9 @@ class ScoringPanelComponent extends BoolatroComponent {
     
     // Discards Pill
     _drawStatPill(canvas, Offset(size.x / 2, 410), 'DISCARDS', GameStyles.discards);
+
+    // Ante Pill
+    _drawStatPill(canvas, Offset(size.x / 2, size.y - 60), 'ANTE', GameStyles.ante);
   }
 
   void _drawStatPill(Canvas canvas, Offset center, String label, Color color) {
@@ -81,6 +86,7 @@ class ScoringPanelComponent extends BoolatroComponent {
     targetText.position = Vector2(size.x / 2, 245);
     handsValue.position = Vector2(size.x / 2 + 95, 340);
     discardValue.position = Vector2(size.x / 2 + 95, 410);
+    anteValue.position = Vector2(size.x / 2 + 95, size.y - 60);
   }
 
   @override
@@ -103,6 +109,7 @@ class ScoringPanelComponent extends BoolatroComponent {
     final proof = runState.proofState;
     final shop = runState.shopState;
 
+    anteValue.text = runState.currentAnte.toString();
     moneyText.text = '\$${shop.money}';
     scoreText.text = '${proof.blindScore}';
     targetText.text = 'Target: ${proof.blindTargetScore}';

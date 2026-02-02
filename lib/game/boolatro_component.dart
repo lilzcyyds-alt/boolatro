@@ -35,12 +35,56 @@ mixin Flyable on PositionComponent {
       (this as BoolatroComponent).isVisible = isVisibleAfter;
     }
   }
+
+  Future<void> fadeTo(
+    double targetOpacity, {
+    double duration = 0.5,
+    Curve curve = Curves.easeOutCubic,
+  }) async {
+    if (this is! FadedComponent) return;
+    final component = this as FadedComponent;
+
+    // Remove any existing opacity effects if using Flame effects, 
+    // but since we use a custom field, we'll use a custom effect or just a simple tween.
+    // For now, let's just use Flame's OpacityEffect if we were using HasPaint, 
+    // but BoolatroComponent uses a custom opacity field.
+    
+    final startOpacity = component.opacity;
+    final effect = OpacityAnimationEffect(
+      startOpacity,
+      targetOpacity,
+      EffectController(duration: duration, curve: curve),
+      onUpdate: (val) => component.opacity = val,
+    );
+    await add(effect);
+    await effect.completed;
+  }
 }
 
-abstract class BoolatroComponent extends PositionComponent with HasGameRef<BoolatroGame>, Flyable {
+abstract class FadedComponent {
+  double get opacity;
+  set opacity(double value);
+}
+
+class OpacityAnimationEffect extends ComponentEffect {
+  final double start;
+  final double end;
+  final void Function(double) onUpdate;
+
+  OpacityAnimationEffect(this.start, this.end, super.controller, {required this.onUpdate});
+
+  @override
+  void apply(double progress) {
+    onUpdate(start + (end - start) * progress);
+  }
+}
+
+abstract class BoolatroComponent extends PositionComponent with HasGameRef<BoolatroGame>, Flyable implements FadedComponent {
   RunState get runState => gameRef.runState;
 
   bool isVisible = true;
+  @override
+  double opacity = 1.0;
 
   /// Recursively checks if this component and all its parents are visible.
   bool get isEffectivelyVisible {

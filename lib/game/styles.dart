@@ -10,6 +10,7 @@ class GameStyles {
 
   // Status Colors
   static Color money = Colors.orange.shade700;
+  static Color ante = Colors.indigo.shade700;
   static Color score = Colors.red.shade900;
   static Color hands = Colors.blue.shade700;
   static Color discards = Colors.red.shade700;
