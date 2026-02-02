@@ -13,7 +13,7 @@
         "category": "big blind",
         "targetScore": 150,
         "reward": 3,
-        "premise": "P & (Q & R)"
+        "premise": "Q & R"
     },
     {
         "id": "boss_blind",
@@ -21,6 +21,6 @@
         "category": "boss blind",
         "targetScore": 300,
         "reward": 5,
-        "premise": "P & Q"
+        "premise": "P & (Q & R)"
     }
 ]

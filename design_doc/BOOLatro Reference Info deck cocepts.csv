@@ -1,0 +1,80 @@
+﻿Tarot ideas,,
+,,
+The Docket: Legal Document Card Concepts,,
+,,
+"This list maps the effects of Balatro's Tarot cards to specific legal documents, creating a new thematic set to replace the ""Academy"" cards.",,
+,,
+Card Effect,Legal Document Name,Thematic Rationale
+Creates a copy of the last consumable card used,Certified Copy,"A literal, official duplicate of a document you just used, ready to be entered into the record again."
+Enhances 2 selected cards to Lucky Cards,Motion to Reconsider,"You're asking the court to take another look at your evidence, introducing an element of luck and hoping for a favorable outcome."
+Creates up to 2 random Alchemy cards,Injunction,"A powerful court order that imposes new rules and conditions on the case, perfectly represented by creating new ""Alchemy"" rule cards."
+Enhances 2 selected cards to Mult Cards,Binding Precedent,"You're applying a powerful, established legal ruling to your current evidence, making it significantly more persuasive."
+Creates up to 2 random Docket cards,Subpoena Duces Tecum,"A real type of subpoena that commands someone to produce documents, literally generating more cards for ""The Docket."""
+Enhances 2 selected cards to Bonus Cards,Affidavit of Merit,A sworn statement from an expert that adds foundational weight and credibility (Bonus Chips) to your evidence.
+Enhances 1 selected card into a Wild Card,Nunc Pro Tunc Order,A retroactive court order that corrects a past record. It's like retroactively changing a card's suit to be whatever you needed it to be.
+Enhances 1 selected card into a Steel Card,Notarized Document,"A notary's seal makes a document official, durable, and hard to dispute, just like a Steel card."
+,Admitted Exhibit,
+Enhances 1 selected card into a Glass Card,Confession,"A powerful, one-time piece of evidence that can win the argument on its own but is consumed in the process."
+Doubles Money (Max of $20).,Retainer Agreement,"The contract a client signs to secure your services, often involving a significant upfront payment."
+1 in 4 chance to add an edition,Judicial Discretion,The inherent power of a judge to make a ruling based on their own judgment. This card represents a random boon granted by the judge.
+,Unforeseen Precedent,
+Gives the total sell value of all partners,Liquidation Order,A court order to convert all assets (your partners) into their cash value.
+Enhances 1 selected card into a Gold Card ,Golden Parachute,
+Enhances 1 selected card into a Stone Card/ EXHIBIT,Deposition,"A sworn, out-of-court testimony that becomes a solid, foundational, and unchangeable part of the case record."
+Converts up to 3 cards to one suit,"Change of Venue (to Location), Character Witness (to Suspect), Forensics Report (to Weapon)","Specific legal actions that focus the case on one aspect, converting other evidence to match that focus."
+Converts up to 3 selected cards into Suitless,Immunity Order,"A court order that strips a witness of their criminal liability, removing their most defining characteristic."
+Creates a random Partner card,Bar Association Referral,The official legal body recommends a new partner for your firm.
+"Select 2 cards, convert the right card into the left",Merger Clause,A contract term stating that this new agreement merges with and supersedes all previous ones. The left card's identity supersedes the right one.
+Destroys up to 2 selected cards,Motion to Strike,A formal request to a judge to have evidence or testimony removed from the court record.
+,,
+,Lein,"A legal claim placed on an asset (a card) to secure a debt, making it valuable in a monetary sense."
+,,
+,,
+,,
+Legal Fictions: Spectral Card Concepts,,
+,,
+"This list maps the high-risk, high-reward nature of Balatro's Spectral cards to the theme of ""Legal Fictions""—powerful, reality-bending legal principles.",,
+,,
+Spectral Card Effect (Example),Legal Fiction Name,Thematic Rationale
+Duplicates a random Joker,Corporate Personhood,"The legal fiction that a corporation can be treated as a person. This card ""creates a new person"" for your firm by duplicating a partner. Negative: Destroys 2 random cards."
+Creates 4 random Tarot cards,The Reasonable Person,"The law often judges actions against a hypothetical ""reasonable person."" This card summons the judgments of four such phantoms. Negative: Lowers max hand size by 1."
+Makes 1 Joker have a 1 in 2 chance of being destroyed,Fugitive Disentitlement,"The doctrine that a fugitive from justice cannot access the court system. This partner is now ""on the run,"" and you might lose access to them. Positive: The targeted partner gives x3 Mult."
+All cards become one rank,Civil Death,"An old legal status where a person loses all their rights, as if they were dead. All your cards lose their individual identity and are reduced to one. Positive: This hand gets +200 Chips."
+Destroys all Jokers and gives money,Eminent Domain,"The government's power to seize private property for public use. Your partners are ""seized"" for the greater good of your wallet. Positive: Gain $50."
+Applies a random seal to every Joker,Mortmain (The Dead Hand),"An ancient doctrine concerning property held by an institution in perpetuity. The ""dead hand"" of the past reaches out to permanently mark all of your partners. Negative: All partners are debuffed until one is sold."
+,,
+,,
+Extra-Judicial Measures: Spectral Card Concepts,,
+,,
+"This list maps the high-risk, high-reward nature of Balatro's Spectral cards to the theme of ""Extra-Judicial Measures""—powerful, dangerous, and often unethical actions taken outside the normal rules of court.",,
+,,
+Spectral Card Effect (Example),Measure Name,Thematic Rationale
+Duplicates a random Joker,The Unethical Hire,"You've hired a brilliant but disbarred attorney to secretly work on the case, effectively ""duplicating"" a partner's skills. Negative: The risk of discovery is high, forcing you to destroy 2 random cards to cover your tracks."
+Creates 4 random Tarot cards,Jury Tampering,"You've made a risky attempt to influence the jury, resulting in a flood of new procedural opportunities (Docket cards). Negative: The judge is suspicious, lowering your max hand size by 1."
+Makes 1 Joker have a 1 in 2 chance of being destroyed,The Secret Informant,"You're relying on an informant from the criminal underworld. Their information is incredibly valuable (x3 Mult), but they are unreliable and might disappear at any moment."
+All cards become one rank,Witness Intimidation,"You've scared a key witness into changing their story. All your cards now conform to a single, simple narrative. Positive: The simplicity of the story makes it powerful, granting a large Chip bonus."
+Destroys all Jokers and gives money,The Golden Parachute,"You've convinced your entire team of partners to dissolve the firm and take a massive payout, abandoning the case entirely."
+Applies a random seal to every Joker,The Backroom Deal,"You've made a secret deal with the opposing counsel that has permanent, unforeseen consequences for every partner at your firm. Negative: All partners are debuffed until one is sold to ""pay the price"" of the deal."
+,,
+,,
+Contempt of Court: Spectral Card Concepts,,
+,,
+"This list maps the spectral card effects to the theme of ""Contempt of Court""—powerful, dangerous, and often unethical actions that defy the rules of the courtroom for a major advantage.",,
+,,
+Spectral Card Effect,Contempt of Court Name,Thematic Rationale
+"Destroy 1 random card in hand, but add 3 random Enhanced cards",Misleading the Court,You're sacrificing a piece of honest evidence to introduce three deceptively powerful (enhanced) ones.
+"Destroy 1 random card in hand, but add 2 random Enhanced cards",Fabricating Evidence,A slightly less effective but still potent version of the above.
+Add a Gold Seal to 1 selected card,Bribery,"A direct, illegal payment to make a piece of evidence financially valuable."
+"Add Foil, Holographic, or Polychrome edition to a random card",Exaggerating Claims,You're embellishing a piece of evidence to make it seem more important than it is.
+"Creates a random Rare Partner, but sets money to $0",The Pro Bono Gamble,"You're taking on a huge, prestigious case (a Rare Partner) for free, betting the entire firm's resources on the future win."
+Converts all cards in hand to a single random suit,Leading the Witness,"You're forcing all the evidence in your hand to conform to a single, narrow narrative, regardless of the truth."
+"Add Negative to a random Partner, but -1 Hand Size",Conflict of Interest,"You've created a situation where one of your partners is now a liability (Negative), and the complexity of managing it reduces your overall capacity."
+"Destroy 2 random cards in hand, but gain $20",Destroying Evidence,"A direct, illegal act for a quick cash payout."
+"Create a copy of 1 of your Partners at random, then destroy the original",Identity Theft,"You've stolen the identity of a partner, creating a perfect replica but ""destroying"" the original's reputation in the process."
+Adds a Red Seal to 1 selected card,Suborning Perjury,"You're convincing a witness to lie under oath, forcing them to ""re-testify"" (re-trigger) their statement."
+"Adds Polychrome to a random Partner, and destroys the rest",The Star Witness,"You're betting your entire case on one single, brilliant witness, sacrificing the rest of your team to make them shine."
+Adds a Blue Seal to 1 selected card,Forging a Precedent,"You're creating a fake ""landmark case"" (Alchemy card) to support your argument."
+Adds a Purple Seal to 1 selected card,Leaking to the Press,"You're discarding a piece of evidence to the media, which comes back as a new procedural advantage (Docket card)."
+"Create 2 exact copies (including Enhancements, Edition, and Seal) of a card",The Twin Forgeries,You've created two perfect fakes of a crucial piece of evidence.
+Creates a Legendary Partner,The Master Forger,"You've created the ultimate fake asset, a legendary partner who seems real."
+Upgrades every proof rule by one level,Rewriting the Lawbook,The ultimate act of contempt: you're literally changing the fundamental rules of the game.
