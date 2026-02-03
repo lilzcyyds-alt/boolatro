@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, PaintingStyle;
+import 'package:flutter/material.dart'
+    show Colors, Paint, RRect, Radius, PaintingStyle;
 import '../boolatro_component.dart';
 import '../styles.dart';
 import '../../state/run_state.dart';
@@ -13,14 +14,70 @@ class ScoringPanelComponent extends BoolatroComponent {
   late final TextComponent handsValue;
   late final TextComponent discardValue;
 
+  // Score breakdown (Balatro-style): Chips x Multiplier
+  late final TextComponent chipsValue;
+  late final TextComponent multValue;
+
   @override
   Future<void> onLoad() async {
-    add(anteValue = TextComponent(text: '1', textRenderer: GameStyles.valueSmall, anchor: Anchor.centerRight));
-    add(moneyText = TextComponent(text: '\$0', textRenderer: GameStyles.valueSmall, anchor: Anchor.centerRight));
-    add(scoreText = TextComponent(text: '0', textRenderer: GameStyles.valueLarge, anchor: Anchor.center));
-    add(targetText = TextComponent(text: 'Target: 0', textRenderer: GameStyles.label, anchor: Anchor.center));
-    add(handsValue = TextComponent(text: '0', textRenderer: GameStyles.valueSmall, anchor: Anchor.centerRight));
-    add(discardValue = TextComponent(text: '0', textRenderer: GameStyles.valueSmall, anchor: Anchor.centerRight));
+    add(
+      anteValue = TextComponent(
+        text: '1',
+        textRenderer: GameStyles.valueSmall,
+        anchor: Anchor.centerRight,
+      ),
+    );
+    add(
+      moneyText = TextComponent(
+        text: '\$0',
+        textRenderer: GameStyles.valueSmall,
+        anchor: Anchor.centerRight,
+      ),
+    );
+    add(
+      scoreText = TextComponent(
+        text: '0',
+        textRenderer: GameStyles.valueLarge,
+        anchor: Anchor.center,
+      ),
+    );
+    add(
+      targetText = TextComponent(
+        text: 'Target: 0',
+        textRenderer: GameStyles.label,
+        anchor: Anchor.center,
+      ),
+    );
+    add(
+      handsValue = TextComponent(
+        text: '0',
+        textRenderer: GameStyles.valueSmall,
+        anchor: Anchor.centerRight,
+      ),
+    );
+    add(
+      discardValue = TextComponent(
+        text: '0',
+        textRenderer: GameStyles.valueSmall,
+        anchor: Anchor.centerRight,
+      ),
+    );
+
+    // Breakdown placeholders (wired later when Chips/Mult exist in state)
+    add(
+      chipsValue = TextComponent(
+        text: '0',
+        textRenderer: GameStyles.valueSmall,
+        anchor: Anchor.centerRight,
+      ),
+    );
+    add(
+      multValue = TextComponent(
+        text: '1',
+        textRenderer: GameStyles.valueSmall,
+        anchor: Anchor.centerRight,
+      ),
+    );
 
     onStateChanged();
   }
@@ -36,10 +93,13 @@ class ScoringPanelComponent extends BoolatroComponent {
       const Radius.circular(12),
     );
     canvas.drawRRect(rect, Paint()..color = Colors.black.withOpacity(0.4));
-    canvas.drawRRect(rect, Paint()
-      ..color = Colors.white10
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2);
+    canvas.drawRRect(
+      rect,
+      Paint()
+        ..color = Colors.white10
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
 
     // Money Pill
     _drawStatPill(canvas, Offset(size.x / 2, 60), 'MONEY', GameStyles.money);
@@ -49,21 +109,75 @@ class ScoringPanelComponent extends BoolatroComponent {
       Rect.fromCenter(center: Offset(size.x / 2, 210), width: 210, height: 110),
       const Radius.circular(8),
     );
-    canvas.drawRRect(scoreBox, Paint()..color = GameStyles.score.withOpacity(0.8));
-    canvas.drawRRect(scoreBox, Paint()
-      ..color = Colors.white24
-      ..style = PaintingStyle.stroke);
-    
-    GameStyles.label.render(canvas, 'SCORE', Vector2(size.x / 2, 170), anchor: Anchor.center);
+    canvas.drawRRect(
+      scoreBox,
+      Paint()..color = GameStyles.score.withOpacity(0.8),
+    );
+    canvas.drawRRect(
+      scoreBox,
+      Paint()
+        ..color = Colors.white24
+        ..style = PaintingStyle.stroke,
+    );
+
+    GameStyles.label.render(
+      canvas,
+      'SCORE',
+      Vector2(size.x / 2, 170),
+      anchor: Anchor.center,
+    );
+
+    // Score breakdown boxes (Chips x Mult) - side-by-side under the SCORE box
+    // Panel width is 230; use two compact boxes with a small gap.
+    const boxW = 100.0;
+    const boxH = 44.0;
+    const gap = 18.0;
+    const centerY = 330.0;
+    final leftCenterX = size.x / 2 - (boxW / 2) - (gap / 2);
+    final rightCenterX = size.x / 2 + (boxW / 2) + (gap / 2);
+
+    // Boxes only (no label text inside). Values are rendered as TextComponents.
+    _drawBreakdownBox(
+      canvas,
+      center: Offset(leftCenterX, centerY),
+      color: Colors.teal.shade800,
+      width: boxW,
+      height: boxH,
+    );
+    _drawBreakdownBox(
+      canvas,
+      center: Offset(rightCenterX, centerY),
+      color: Colors.purple.shade800,
+      width: boxW,
+      height: boxH,
+    );
+
+    // Multiplication sign between the two boxes (Balatro style: Chips × Mult)
+    GameStyles.label.render(
+      canvas,
+      '×',
+      Vector2(size.x / 2, centerY),
+      anchor: Anchor.center,
+    );
 
     // Hands Pill
-    _drawStatPill(canvas, Offset(size.x / 2, 340), 'HANDS', GameStyles.hands);
-    
+    _drawStatPill(canvas, Offset(size.x / 2, 425), 'HANDS', GameStyles.hands);
+
     // Discards Pill
-    _drawStatPill(canvas, Offset(size.x / 2, 410), 'DISCARDS', GameStyles.discards);
+    _drawStatPill(
+      canvas,
+      Offset(size.x / 2, 495),
+      'DISCARDS',
+      GameStyles.discards,
+    );
 
     // Ante Pill
-    _drawStatPill(canvas, Offset(size.x / 2, size.y - 60), 'ANTE', GameStyles.ante);
+    _drawStatPill(
+      canvas,
+      Offset(size.x / 2, size.y - 60),
+      'ANTE',
+      GameStyles.ante,
+    );
   }
 
   void _drawStatPill(Canvas canvas, Offset center, String label, Color color) {
@@ -72,20 +186,63 @@ class ScoringPanelComponent extends BoolatroComponent {
       const Radius.circular(4),
     );
     canvas.drawRRect(pillRect, Paint()..color = color);
-    canvas.drawRRect(pillRect, Paint()
-      ..color = Colors.white24
-      ..style = PaintingStyle.stroke);
-    
+    canvas.drawRRect(
+      pillRect,
+      Paint()
+        ..color = Colors.white24
+        ..style = PaintingStyle.stroke,
+    );
+
     final labelPainter = GameStyles.label;
-    labelPainter.render(canvas, label, Vector2(center.dx - 90, center.dy), anchor: Anchor.centerLeft);
+    labelPainter.render(
+      canvas,
+      label,
+      Vector2(center.dx - 90, center.dy),
+      anchor: Anchor.centerLeft,
+    );
+  }
+
+  void _drawBreakdownBox(
+    Canvas canvas, {
+    required Offset center,
+    required Color color,
+    required double width,
+    required double height,
+  }) {
+    final boxRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: center, width: width, height: height),
+      const Radius.circular(8),
+    );
+    canvas.drawRRect(boxRect, Paint()..color = color.withOpacity(0.9));
+    canvas.drawRRect(
+      boxRect,
+      Paint()
+        ..color = Colors.white24
+        ..style = PaintingStyle.stroke,
+    );
   }
 
   void _layout() {
     moneyText.position = Vector2(size.x / 2 + 95, 60);
     scoreText.position = Vector2(size.x / 2, 205);
     targetText.position = Vector2(size.x / 2, 245);
-    handsValue.position = Vector2(size.x / 2 + 95, 340);
-    discardValue.position = Vector2(size.x / 2 + 95, 410);
+    // Breakdown values sit side-by-side under the SCORE box.
+    // Must match render() geometry.
+    const boxW = 100.0;
+    const gap = 18.0;
+    const centerY = 330.0;
+    final leftCenterX = size.x / 2 - (boxW / 2) - (gap / 2);
+    final rightCenterX = size.x / 2 + (boxW / 2) + (gap / 2);
+
+    // Center the values now that labels are removed.
+    chipsValue.anchor = Anchor.center;
+    multValue.anchor = Anchor.center;
+    chipsValue.position = Vector2(leftCenterX, centerY);
+    multValue.position = Vector2(rightCenterX, centerY);
+
+    handsValue.position = Vector2(size.x / 2 + 95, 425);
+    discardValue.position = Vector2(size.x / 2 + 95, 495);
+
     anteValue.position = Vector2(size.x / 2 + 95, size.y - 60);
   }
 
@@ -105,7 +262,7 @@ class ScoringPanelComponent extends BoolatroComponent {
   @override
   void onStateChanged() {
     if (!isLoaded || !isVisible || runState.phase == GamePhase.start) return;
-    
+
     final proof = runState.proofState;
     final shop = runState.shopState;
 
@@ -115,6 +272,10 @@ class ScoringPanelComponent extends BoolatroComponent {
     targetText.text = 'Target: ${proof.blindTargetScore}';
     handsValue.text = proof.handsRemaining.toString();
     discardValue.text = proof.discardsRemaining.toString();
+
+    // Placeholder until we add real chip/mult state.
+    chipsValue.text = '0';
+    multValue.text = '1';
 
     _layout();
   }
