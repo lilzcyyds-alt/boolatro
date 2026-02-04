@@ -5,7 +5,12 @@ import '../special_card.dart';
 
 /// Demo card: gives small consolation points on failed submits.
 class AlchemyCard extends SpecialCard {
-  const AlchemyCard() : super(id: 'alchemy.basic', name: 'Alchemy', cost: 4);
+  const AlchemyCard({
+    String id = 'alchemy.basic',
+    String name = 'Alchemy',
+    int cost = 4,
+    String? imagePath,
+  }) : super(id: id, name: name, cost: cost, imagePath: imagePath);
 
   @override
   EffectPatch onTrigger(EffectContext ctx) {

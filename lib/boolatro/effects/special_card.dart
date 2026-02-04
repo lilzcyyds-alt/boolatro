@@ -7,11 +7,13 @@ abstract class SpecialCard {
     required this.id,
     required this.name,
     required this.cost,
+    this.imagePath,
   });
 
   final String id;
   final String name;
   final int cost;
+  final String? imagePath;
 
   /// Return an [EffectPatch] to apply for this trigger.
   EffectPatch onTrigger(EffectContext ctx);

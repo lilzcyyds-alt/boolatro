@@ -5,6 +5,7 @@ import '../boolatro_component.dart';
 import '../../state/run_state.dart';
 import '../../boolatro/effects/effects.dart';
 import '../styles.dart';
+import '../boolatro_game.dart';
 
 class JokerRowComponent extends BoolatroComponent {
   final Map<int, JokerCardComponent> _jokerMap = {};
@@ -89,12 +90,13 @@ class JokerRowComponent extends BoolatroComponent {
   }
 }
 
-class JokerCardComponent extends PositionComponent with Flyable {
+class JokerCardComponent extends PositionComponent with Flyable, HasGameRef<BoolatroGame> {
   final SpecialCard card;
+  Sprite? _sprite;
 
   JokerCardComponent({required this.card});
 
-  late final TextComponent nameText;
+  late final BoolatroTextComponent nameText;
   bool isVisible = true;
 
   @override
@@ -106,13 +108,30 @@ class JokerCardComponent extends PositionComponent with Flyable {
 
   @override
   Future<void> onLoad() async {
-    add(nameText = TextComponent(
+    if (card.imagePath != null) {
+      String path = card.imagePath!;
+      if (path.startsWith('assets/images/')) {
+        path = path.replaceFirst('assets/images/', '');
+      }
+      try {
+        _sprite = await game.loadSprite(path);
+      } catch (e) {
+        print('Error loading joker sprite: $path - $e');
+      }
+    }
+
+    add(nameText = BoolatroTextComponent(
       text: card.name,
       textRenderer: GameStyles.label,
       position: size / 2,
       anchor: Anchor.center,
       priority: 1,
     ));
+    
+    // If we have a sprite, hide the name text
+    if (_sprite != null) {
+      nameText.isVisible = false; 
+    }
   }
 
   @override
@@ -121,10 +140,15 @@ class JokerCardComponent extends PositionComponent with Flyable {
       size.toRect(),
       const Radius.circular(6),
     );
-    canvas.drawRRect(rect, Paint()..color = Colors.white12);
-    canvas.drawRRect(rect, Paint()
-      ..color = Colors.white24
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2);
+
+    if (_sprite != null) {
+      _sprite!.render(canvas, size: size);
+    } else {
+      canvas.drawRRect(rect, Paint()..color = Colors.white12);
+      canvas.drawRRect(rect, Paint()
+        ..color = Colors.white24
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2);
+    }
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, Painti
 import '../../boolatro_component.dart';
 import '../../styles.dart';
 import '../action_panel.dart';
+import '../../boolatro_game.dart';
 // import '../../../state/run_state.dart';
 
 class ShopStageComponent extends BoolatroComponent {
@@ -78,10 +79,11 @@ class ShopStageComponent extends BoolatroComponent {
   }
 }
 
-class ShopItemComponent extends PositionComponent {
+class ShopItemComponent extends PositionComponent with HasGameRef<BoolatroGame> {
   final dynamic card;
   final VoidCallback onBuy;
   final bool canAfford;
+  Sprite? _sprite;
 
   ShopItemComponent({
     required this.card,
@@ -91,12 +93,29 @@ class ShopItemComponent extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
-    add(TextComponent(
+    if (card.imagePath != null) {
+      String path = card.imagePath!;
+      if (path.startsWith('assets/images/')) {
+        path = path.replaceFirst('assets/images/', '');
+      }
+      try {
+        _sprite = await game.loadSprite(path);
+      } catch (e) {
+        print('Error loading shop item sprite: $path - $e');
+      }
+    }
+
+    final nameComp = BoolatroTextComponent(
       text: card.name,
       textRenderer: TextPaint(style: GameStyles.label.style.copyWith(fontSize: 12)),
       position: Vector2(size.x / 2, 45),
       anchor: Anchor.center,
-    ));
+    );
+    add(nameComp);
+    
+    if (_sprite != null) {
+      nameComp.isVisible = false;
+    }
 
     add(GameButton(
       label: '\$${card.cost}',
@@ -115,7 +134,19 @@ class ShopItemComponent extends PositionComponent {
       size.toRect(),
       const Radius.circular(8),
     );
-    canvas.drawRRect(rect, Paint()..color = Colors.white.withOpacity(0.1));
+
+    if (_sprite != null) {
+      // Draw a small background for the sprite
+      canvas.drawRRect(rect, Paint()..color = Colors.white.withOpacity(0.05));
+      _sprite!.render(canvas, 
+        position: Vector2(size.x / 2, size.y / 2 - 10),
+        size: Vector2(84, 112), // Standard card size in shop
+        anchor: Anchor.center,
+      );
+    } else {
+      canvas.drawRRect(rect, Paint()..color = Colors.white.withOpacity(0.1));
+    }
+
     canvas.drawRRect(rect, Paint()
       ..color = Colors.white24
       ..style = PaintingStyle.stroke

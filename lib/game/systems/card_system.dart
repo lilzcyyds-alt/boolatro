@@ -1,19 +1,22 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/services.dart';
 
 class CardConfig {
   final String id;
   final String name;
+  final String? content;
   final String imagePath;
-  final String abilityDescription;
+  final String description;
   final String category;
   final int cost;
 
   CardConfig({
     required this.id,
     required this.name,
+    this.content,
     required this.imagePath,
-    required this.abilityDescription,
+    required this.description,
     required this.category,
     required this.cost,
   });
@@ -22,8 +25,9 @@ class CardConfig {
     return CardConfig(
       id: json['id'],
       name: json['name'],
+      content: json['content'],
       imagePath: json['imagePath'],
-      abilityDescription: json['abilityDescription'],
+      description: json['description'] ?? '',
       category: json['category'],
       cost: json['cost'],
     );
@@ -44,5 +48,15 @@ class CardSystem {
     } catch (e) {
       print('Error loading cards.json: $e');
     }
+  }
+
+  static CardConfig? findRandomByContent(String content) {
+    final candidates = _cards.where((c) => c.content == content).toList();
+    if (candidates.isEmpty) return null;
+    return candidates[Random().nextInt(candidates.length)];
+  }
+
+  static CardConfig? findById(String id) {
+    return _cards.firstWhere((c) => c.id == id, orElse: () => _cards.first);
   }
 }

@@ -1,25 +1,313 @@
 [
     {
+        "id": "p_friday_standard",
+        "name": "P (Friday)",
+        "content": "P",
+        "imagePath": "assets/images/card_sprites/p/pfriday.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "p_suspects_standard",
+        "name": "P (Suspects)",
+        "content": "P",
+        "imagePath": "assets/images/card_sprites/p/pickpocket.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "p_weapons_standard",
+        "name": "P (Weapons)",
+        "content": "P",
+        "imagePath": "assets/images/card_sprites/p/pipe.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "p_rooms_standard",
+        "name": "P (Rooms)",
+        "content": "P",
+        "imagePath": "assets/images/card_sprites/p/parlor.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "q_friday_standard",
+        "name": "Q (Friday)",
+        "content": "Q",
+        "imagePath": "assets/images/card_sprites/q/qfriday.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "q_suspects_standard",
+        "name": "Q (Suspects)",
+        "content": "Q",
+        "imagePath": "assets/images/card_sprites/q/quack.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "q_weapons_standard",
+        "name": "Q (Weapons)",
+        "content": "Q",
+        "imagePath": "assets/images/card_sprites/q/quiver.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "q_rooms_standard",
+        "name": "Q (Rooms)",
+        "content": "Q",
+        "imagePath": "assets/images/card_sprites/q/quay.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "r_friday_standard",
+        "name": "R (Friday)",
+        "content": "R",
+        "imagePath": "assets/images/card_sprites/r/rfriday.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "r_suspects_standard",
+        "name": "R (Suspects)",
+        "content": "R",
+        "imagePath": "assets/images/card_sprites/r/rival.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "r_weapons_standard",
+        "name": "R (Weapons)",
+        "content": "R",
+        "imagePath": "assets/images/card_sprites/r/revolver.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "r_rooms_standard",
+        "name": "R (Rooms)",
+        "content": "R",
+        "imagePath": "assets/images/card_sprites/r/restaurant.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "s_friday_standard",
+        "name": "S (Friday)",
+        "content": "S",
+        "imagePath": "assets/images/card_sprites/s/sfriday.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "s_suspects_standard",
+        "name": "S (Suspects)",
+        "content": "S",
+        "imagePath": "assets/images/card_sprites/s/spouse.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "s_weapons_standard",
+        "name": "S (Weapons)",
+        "content": "S",
+        "imagePath": "assets/images/card_sprites/s/saw.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "s_rooms_standard",
+        "name": "S (Rooms)",
+        "content": "S",
+        "imagePath": "assets/images/card_sprites/s/study.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "t_friday_standard",
+        "name": "T (Friday)",
+        "content": "T",
+        "imagePath": "assets/images/card_sprites/t/tfriday.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "t_suspects_standard",
+        "name": "T (Suspects)",
+        "content": "T",
+        "imagePath": "assets/images/card_sprites/t/theif.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "t_weapons_standard",
+        "name": "T (Weapons)",
+        "content": "T",
+        "imagePath": "assets/images/card_sprites/t/trophy.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "t_rooms_standard",
+        "name": "T (Rooms)",
+        "content": "T",
+        "imagePath": "assets/images/card_sprites/t/tavern.png",
+        "description": "",
+        "category": "atomic",
+        "cost": 1
+    },
+    {
+        "id": "and_friday_standard",
+        "name": "AND (Friday)",
+        "content": "&",
+        "imagePath": "assets/images/card_sprites/and/andfriday.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "and_suspects_standard",
+        "name": "AND (Suspects)",
+        "content": "&",
+        "imagePath": "assets/images/card_sprites/and/andperson.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "and_weapons_standard",
+        "name": "AND (Weapons)",
+        "content": "&",
+        "imagePath": "assets/images/card_sprites/and/andweapon.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "and_rooms_standard",
+        "name": "AND (Rooms)",
+        "content": "&",
+        "imagePath": "assets/images/card_sprites/and/andplace.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "or_friday_standard",
+        "name": "OR (Friday)",
+        "content": "v",
+        "imagePath": "assets/images/card_sprites/or/orfriday.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "or_suspects_standard",
+        "name": "OR (Suspects)",
+        "content": "v",
+        "imagePath": "assets/images/card_sprites/or/orperson.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "or_weapons_standard",
+        "name": "OR (Weapons)",
+        "content": "v",
+        "imagePath": "assets/images/card_sprites/or/orweapon.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "or_rooms_standard",
+        "name": "OR (Rooms)",
+        "content": "v",
+        "imagePath": "assets/images/card_sprites/or/orplace.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "not_friday_standard",
+        "name": "NOT (Friday)",
+        "content": "~",
+        "imagePath": "assets/images/card_sprites/not/notfriday.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "not_suspects_standard",
+        "name": "NOT (Suspects)",
+        "content": "~",
+        "imagePath": "assets/images/card_sprites/not/notperson.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "not_weapons_standard",
+        "name": "NOT (Weapons)",
+        "content": "~",
+        "imagePath": "assets/images/card_sprites/not/notweapon.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
+        "id": "not_rooms_standard",
+        "name": "NOT (Rooms)",
+        "content": "~",
+        "imagePath": "assets/images/card_sprites/not/notplace.png",
+        "description": "",
+        "category": "connective",
+        "cost": 1
+    },
+    {
         "id": "partner_card_1",
-        "name": "Partner",
-        "imagePath": "assets/images/cards/partner.png",
-        "abilityDescription": "Provides bonus score for correct proofs.",
+        "name": "Junior Partner",
+        "imagePath": "assets/images/card_sprites/partnercards/juniorpartner.png",
+        "description": "When a valid proof is submitted, add bonus score.",
         "category": "partner",
-        "cost": 4
+        "cost": 3
     },
     {
         "id": "alchemy_card_1",
-        "name": "Alchemy",
-        "imagePath": "assets/images/cards/alchemy.png",
-        "abilityDescription": "Provides 3 bonus score for invalid proofs.",
-        "category": "atomic",
-        "cost": 6
+        "name": "Sublimatio",
+        "imagePath": "assets/images/card_sprites/alchmeycards/sublimatio.png",
+        "description": "When an invalid proof is submitted, add 3 bonus score.",
+        "category": "alchemy",
+        "cost": 4
     },
     {
         "id": "extra_hand_card_1",
-        "name": "Extra Hand",
-        "imagePath": "assets/images/cards/extra_hand.png",
-        "abilityDescription": "Grants 1 extra hand per round.",
+        "name": "Billable Hours",
+        "imagePath": "assets/images/card_sprites/partnercards/billablehours.png",
+        "description": "At the start of each round, gain an extra hand.",
         "category": "partner",
         "cost": 5
     }

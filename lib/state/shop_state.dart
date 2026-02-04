@@ -12,12 +12,30 @@ class ShopState {
     inventory.clear();
     
     // Convert CardConfigs to SpecialCards
-    // For now, we still have hardcoded classes, but we should map them by ID
     for (final config in CardSystem.cards) {
       SpecialCard? card;
-      if (config.id == 'partner_card_1') card = const PartnerCard();
-      else if (config.id == 'alchemy_card_1') card = const AlchemyCard();
-      else if (config.id == 'extra_hand_card_1') card = const ExtraHandCard();
+      if (config.id == 'partner_card_1') {
+        card = PartnerCard(
+          id: config.id,
+          name: config.name,
+          cost: config.cost,
+          imagePath: config.imagePath,
+        );
+      } else if (config.id == 'alchemy_card_1') {
+        card = AlchemyCard(
+          id: config.id,
+          name: config.name,
+          cost: config.cost,
+          imagePath: config.imagePath,
+        );
+      } else if (config.id == 'extra_hand_card_1') {
+        card = ExtraHandCard(
+          id: config.id,
+          name: config.name,
+          cost: config.cost,
+          imagePath: config.imagePath,
+        );
+      }
       
       if (card != null) {
         inventory.add(card);

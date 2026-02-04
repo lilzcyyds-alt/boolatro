@@ -4,6 +4,7 @@ import 'dart:ui';
 import '../boolatro/proof_core/play_card.dart';
 import '../boolatro/proof_core/proof_task_generator.dart';
 import '../game/game_config.dart';
+import '../game/systems/card_system.dart';
 
 enum EditorStep {
   idle,
@@ -95,10 +96,13 @@ class ProofState {
     final templates = _defaultHandTemplates();
     for (int i = 0; i < count; i++) {
       final template = templates[_rng.nextInt(templates.length)];
+      final config = CardSystem.findRandomByContent(template.content);
+      
       _hand.add(PlayCard(
         id: _nextCardId++,
         content: template.content,
         type: template.type,
+        imagePath: config?.imagePath,
       ));
     }
   }

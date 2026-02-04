@@ -15,6 +15,7 @@ class LogicCardComponent extends PositionComponent with TapCallbacks, DragCallba
   final VoidCallback onPressed;
   bool isVisible = true;
   bool isDragging = false;
+  Sprite? _sprite;
   
   Vector2 targetPos = Vector2.zero();
   double targetAngle = 0;
@@ -45,6 +46,22 @@ class LogicCardComponent extends PositionComponent with TapCallbacks, DragCallba
   }
 
   LogicCardComponent({required this.card, required this.onPressed});
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    if (card.imagePath != null) {
+      String path = card.imagePath!;
+      if (path.startsWith('assets/images/')) {
+        path = path.replaceFirst('assets/images/', '');
+      }
+      try {
+        _sprite = await game.loadSprite(path);
+      } catch (e) {
+        print('Error loading sprite: $path - $e');
+      }
+    }
+  }
 
   @override
   void update(double dt) {
@@ -103,28 +120,31 @@ class LogicCardComponent extends PositionComponent with TapCallbacks, DragCallba
       size.toRect(),
       const Radius.circular(8),
     );
-    
+
     canvas.drawRRect(
       rect.shift(const Offset(4, 4)),
       Paint()..color = Colors.black.withOpacity(0.5),
     );
-    
-    canvas.drawRRect(rect, Paint()..color = Colors.white);
-    
-    canvas.drawRRect(rect, Paint()
-      ..color = Colors.black26
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3);
-    
-    final textPainter = (card.type == CardType.atom)
-        ? GameStyles.cardAtom 
-        : GameStyles.cardConnective;
 
-    textPainter.render(
-      canvas,
-      card.content,
-      Vector2(size.x / 2, size.y / 2),
-      anchor: Anchor.center,
-    );
+    if (_sprite != null) {
+      _sprite!.render(canvas, size: size);
+    } else {
+      canvas.drawRRect(rect, Paint()..color = Colors.white);
+      canvas.drawRRect(rect, Paint()
+        ..color = Colors.black26
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3);
+
+      final textPainter = (card.type == CardType.atom)
+          ? GameStyles.cardAtom
+          : GameStyles.cardConnective;
+
+      textPainter.render(
+        canvas,
+        card.content,
+        Vector2(size.x / 2, size.y / 2),
+        anchor: Anchor.center,
+      );
+    }
   }
 }
