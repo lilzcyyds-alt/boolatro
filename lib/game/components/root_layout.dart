@@ -1,7 +1,10 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
+import 'package:flutter/animation.dart' show Curves;
 import 'package:flutter/material.dart' show Colors, Paint, LinearGradient, Alignment;
 import '../boolatro_component.dart';
+import '../utils/logger.dart';
 import 'editor_container.dart';
 import 'joker_row.dart';
 import 'scoring_panel.dart';
@@ -9,6 +12,8 @@ import 'action_panel.dart';
 import 'hand.dart';
 import 'stage.dart';
 import 'phase_info.dart';
+import 'overlays/run_info_overlay.dart';
+import 'overlays/options_overlay.dart';
 import '../../state/run_state.dart';
 import '../styles.dart';
 
@@ -20,9 +25,13 @@ class RootLayoutComponent extends BoolatroComponent {
   late final HandComponent hand;
   late final StageComponent stage;
   late final EditorContainerComponent editorContainer;
+  late final RunInfoOverlay runInfoOverlay;
+  late final OptionsOverlay optionsOverlay;
 
   bool _initialized = false;
   bool? _lastEditorOpen;
+  bool? _lastShowRunInfo;
+  bool? _lastShowOptions;
 
   @override
   Future<void> onLoad() async {
@@ -37,7 +46,10 @@ class RootLayoutComponent extends BoolatroComponent {
     stage = StageComponent()..size = Vector2(UIConfig.screenWidth, UIConfig.screenHeight);
     editorContainer = EditorContainerComponent()..size = Vector2(UIConfig.editorPanelWidth, UIConfig.editorPanelHeight);
     
-    addAll([phaseInfo, jokerRow, scoringPanel, actionPanel, hand, stage, editorContainer]);
+    runInfoOverlay = RunInfoOverlay();
+    optionsOverlay = OptionsOverlay();
+
+    addAll([phaseInfo, jokerRow, scoringPanel, actionPanel, hand, stage, editorContainer, runInfoOverlay, optionsOverlay]);
   }
 
   void _layout() {
@@ -77,6 +89,9 @@ class RootLayoutComponent extends BoolatroComponent {
 
       editorContainer.position = UIConfig.getRandomOffscreenPosition();
       editorContainer.isVisible = false;
+
+      runInfoOverlay.isVisible = false;
+      optionsOverlay.isVisible = false;
 
       _initialized = true;
     } else {
@@ -159,12 +174,61 @@ class RootLayoutComponent extends BoolatroComponent {
     if (!isLoaded) return;
     
     final currentEditorOpen = runState.proofState.editorOpen;
-    if (_lastPhase == runState.phase && _lastEditorOpen == currentEditorOpen) return;
+    final currentShowRunInfo = runState.showRunInfo;
+    final currentShowOptions = runState.showOptions;
+
+    if (_lastPhase == runState.phase && 
+        _lastEditorOpen == currentEditorOpen &&
+        _lastShowRunInfo == currentShowRunInfo &&
+        _lastShowOptions == currentShowOptions) return;
     
     _lastPhase = runState.phase;
     _lastEditorOpen = currentEditorOpen;
+    _lastShowRunInfo = currentShowRunInfo;
+    _lastShowOptions = currentShowOptions;
     
-    print('[RootLayoutComponent] onStateChanged. Phase: ${runState.phase}, Editor: $currentEditorOpen');
+    Log.i('Game state changed | Phase: ${runState.phase} | Editor: ${currentEditorOpen ? "OPEN" : "CLOSED"} | RunInfo: $currentShowRunInfo | Options: $currentShowOptions');
     _layout();
+    _updateOverlays();
+  }
+
+  void _updateOverlays() {
+    if (runState.showRunInfo) {
+      if (!runInfoOverlay.isVisible) {
+        runInfoOverlay.isVisible = true;
+        runInfoOverlay.container.position = UIConfig.getRandomOffscreenPosition();
+        runInfoOverlay.container.add(MoveToEffect(
+          Vector2(1920 / 2, 1080 / 2),
+          EffectController(duration: 0.5, curve: Curves.easeOutCubic),
+        ));
+      }
+    } else {
+      if (runInfoOverlay.isVisible && runInfoOverlay.container.children.whereType<Effect>().isEmpty) {
+        runInfoOverlay.container.add(MoveToEffect(
+          UIConfig.getRandomOffscreenPosition(),
+          EffectController(duration: 0.5, curve: Curves.easeInCubic),
+          onComplete: () => runInfoOverlay.isVisible = false,
+        ));
+      }
+    }
+
+    if (runState.showOptions) {
+      if (!optionsOverlay.isVisible) {
+        optionsOverlay.isVisible = true;
+        optionsOverlay.container.position = UIConfig.getRandomOffscreenPosition();
+        optionsOverlay.container.add(MoveToEffect(
+          Vector2(1920 / 2, 1080 / 2),
+          EffectController(duration: 0.5, curve: Curves.easeOutCubic),
+        ));
+      }
+    } else {
+      if (optionsOverlay.isVisible && optionsOverlay.container.children.whereType<Effect>().isEmpty) {
+        optionsOverlay.container.add(MoveToEffect(
+          UIConfig.getRandomOffscreenPosition(),
+          EffectController(duration: 0.5, curve: Curves.easeInCubic),
+          onComplete: () => optionsOverlay.isVisible = false,
+        ));
+      }
+    }
   }
 }

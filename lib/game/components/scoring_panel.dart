@@ -1,9 +1,12 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
+import 'package:flutter/animation.dart' show Curves;
 import 'package:flutter/material.dart'
     show Colors, Paint, RRect, Radius, PaintingStyle;
 import '../boolatro_component.dart';
 import '../styles.dart';
+import 'game_button.dart';
 import '../../state/run_state.dart';
 
 class ScoringPanelComponent extends BoolatroComponent {
@@ -14,9 +17,23 @@ class ScoringPanelComponent extends BoolatroComponent {
   late final TextComponent handsValue;
   late final TextComponent discardValue;
 
+  late final GameButton runInfoButton;
+  late final GameButton optionsButton;
+
   // Score breakdown (Balatro-style): Chips x Multiplier
   late final TextComponent chipsValue;
   late final TextComponent multValue;
+
+  double _displayScore = 0;
+  double _displayChips = 0;
+  double _displayMult = 0;
+
+  int _targetChips = 0;
+  int _targetMult = 0;
+  int _targetScore = 0;
+
+  bool _lastShowingPopup = false;
+  GamePhase? _lastPhase;
 
   @override
   Future<void> onLoad() async {
@@ -77,6 +94,21 @@ class ScoringPanelComponent extends BoolatroComponent {
         textRenderer: GameStyles.valueSmall,
         anchor: Anchor.centerRight,
       ),
+    );
+
+    add(
+      runInfoButton = GameButton(
+        label: 'RUN INFO',
+        color: Colors.blueGrey.shade700,
+        onPressed: () => runState.showRunInfo = true,
+      )..size = Vector2(210, 48),
+    );
+    add(
+      optionsButton = GameButton(
+        label: 'OPTIONS',
+        color: Colors.blueGrey.shade700,
+        onPressed: () => runState.showOptions = true,
+      )..size = Vector2(210, 48),
     );
 
     onStateChanged();
@@ -174,7 +206,7 @@ class ScoringPanelComponent extends BoolatroComponent {
     // Ante Pill
     _drawStatPill(
       canvas,
-      Offset(size.x / 2, size.y - 60),
+      Offset(size.x / 2, 565),
       'ANTE',
       GameStyles.ante,
     );
@@ -222,6 +254,76 @@ class ScoringPanelComponent extends BoolatroComponent {
     );
   }
 
+  void _jump(PositionComponent component) {
+    component.children.whereType<ScaleEffect>().forEach((e) => e.removeFromParent());
+    component.scale = Vector2.all(1.0);
+    component.add(
+      SequenceEffect([
+        ScaleEffect.to(
+          Vector2.all(1.2),
+          EffectController(duration: 0.1, curve: Curves.easeOut),
+        ),
+        ScaleEffect.to(
+          Vector2.all(1.0),
+          EffectController(duration: 0.1, curve: Curves.easeIn),
+        ),
+      ]),
+    );
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (!isVisible || runState.phase == GamePhase.start) return;
+
+    final proof = runState.proofState;
+
+    bool changed = false;
+
+    // Pause score lerping during validation popup to let user see chips/mult
+    if (!proof.showingValidationPopup) {
+      if (_displayScore != _targetScore) {
+        _displayScore =
+            _lerpTo(_displayScore, _targetScore.toDouble(), dt * 4, minStep: 1);
+        scoreText.text = _displayScore.toInt().toString();
+        changed = true;
+      }
+    }
+
+    if (_displayChips != _targetChips) {
+      _displayChips =
+          _lerpTo(_displayChips, _targetChips.toDouble(), dt * 6, minStep: 1);
+      chipsValue.text = _displayChips.toInt().toString();
+      changed = true;
+    }
+
+    if (_displayMult != _targetMult) {
+      _displayMult =
+          _lerpTo(_displayMult, _targetMult.toDouble(), dt * 6, minStep: 0.1);
+      // Show one decimal for small mult values, otherwise integer
+      multValue.text =
+          (_displayMult < 10 && _displayMult > 0 && _displayMult % 1 != 0)
+              ? _displayMult.toStringAsFixed(1)
+              : _displayMult.toInt().toString();
+      changed = true;
+    }
+
+    if (changed) {
+      _layout();
+    }
+  }
+
+  double _lerpTo(double current, double target, double t, {double minStep = 0}) {
+    if ((current - target).abs() < (minStep > 0 ? minStep : 0.01)) return target;
+    final delta = target - current;
+    double step = delta * t;
+    if (minStep > 0 && step.abs() < minStep) {
+      step = step.sign * minStep;
+    }
+    if (step.abs() > delta.abs()) return target;
+    return current + step;
+  }
+
   void _layout() {
     moneyText.position = Vector2(size.x / 2 + 95, 60);
     scoreText.position = Vector2(size.x / 2, 205);
@@ -243,7 +345,12 @@ class ScoringPanelComponent extends BoolatroComponent {
     handsValue.position = Vector2(size.x / 2 + 95, 425);
     discardValue.position = Vector2(size.x / 2 + 95, 495);
 
-    anteValue.position = Vector2(size.x / 2 + 95, size.y - 60);
+    anteValue.position = Vector2(size.x / 2 + 95, 565);
+
+    runInfoButton.position = Vector2(size.x / 2, size.y - 120);
+    runInfoButton.anchor = Anchor.center;
+    optionsButton.position = Vector2(size.x / 2, size.y - 60);
+    optionsButton.anchor = Anchor.center;
   }
 
   @override
@@ -266,16 +373,51 @@ class ScoringPanelComponent extends BoolatroComponent {
     final proof = runState.proofState;
     final shop = runState.shopState;
 
+    final isNewPhase = _lastPhase != runState.phase;
+    _lastPhase = runState.phase;
+
     anteValue.text = runState.currentAnte.toString();
     moneyText.text = '\$${shop.money}';
-    scoreText.text = '${proof.blindScore}';
+    // scoreText, chipsValue, multValue are updated in update() for ticking effect
     targetText.text = 'Target: ${proof.blindTargetScore}';
     handsValue.text = proof.handsRemaining.toString();
     discardValue.text = proof.discardsRemaining.toString();
 
-    // Placeholder until we add real chip/mult state.
-    chipsValue.text = '0';
-    multValue.text = '1';
+    if (isNewPhase && runState.phase == GamePhase.proof) {
+      // Snap values on new blind to prevent unwanted animations/jumps
+      _displayScore = proof.blindScore.toDouble();
+      _displayChips = proof.currentChips.toDouble();
+      _displayMult = proof.currentMult.toDouble();
+
+      scoreText.text = proof.blindScore.toString();
+      chipsValue.text = proof.currentChips.toString();
+      multValue.text = proof.currentMult.toString();
+    }
+
+    _targetChips = proof.currentChips;
+    _targetMult = proof.currentMult;
+    _targetScore = proof.blindScore;
+
+    // Trigger jump animations on value changes in state (only if not snapped)
+    if (!isNewPhase) {
+      if (proof.blindScore != _displayScore.toInt() &&
+          !proof.showingValidationPopup) {
+        // Score only jumps when transfer starts (popup closed)
+        if (_lastShowingPopup && !proof.showingValidationPopup) {
+          _jump(scoreText);
+        }
+      }
+
+      if (proof.currentChips != _displayChips.toInt() &&
+          proof.currentChips != 0) {
+        _jump(chipsValue);
+      }
+      if (proof.currentMult != _displayMult.toInt() && proof.currentMult != 0) {
+        _jump(multValue);
+      }
+    }
+
+    _lastShowingPopup = proof.showingValidationPopup;
 
     _layout();
   }

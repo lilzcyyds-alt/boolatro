@@ -1,3 +1,4 @@
+import 'inference_rule.dart';
 import 'proof_path.dart';
 import 'proof_validation_result.dart';
 
@@ -6,33 +7,25 @@ import 'proof_validation_result.dart';
 /// We keep this intentionally simple and deterministic so Phase 3 UI/gameplay
 /// can be playable before we port the full Unity scoring system.
 class ProofScoring {
-  /// Score awarded when the proof is valid.
-  static int baseScore(ProofPath path) {
-    // Premise line is implicit in UI, so count only user lines.
-    final int lines = path.proofLines.length;
-    final int lengthBonus = (path.conclusion ?? '').trim().isEmpty ? 0 : 10;
-    return 100 + (lines * 20) + lengthBonus;
-  }
+  /// Chips per card in conclusion.
+  static const int chipsPerCard = 5;
 
-  /// Score awarded when the proof is invalid.
-  ///
-  /// This is the "fallback" scoring channel so players still get *something*
-  /// for partial work, which makes the blind loop feel less binary.
-  static int fallbackScore(ProofPath path, ProofValidationResult result) {
-    // If they didn't even write anything, no pity points.
-    if (path.proofLines.isEmpty) {
-      return 0;
+  /// Calculate the score breakdown (chips and mult) for a proof attempt.
+  static (int chips, int mult) calculateBreakdown(
+    int cardCount,
+    ProofPath path,
+    bool isValid,
+  ) {
+    final int baseChips = cardCount * chipsPerCard;
+
+    if (!isValid || path.proofLines.isEmpty) {
+      return (baseChips, 1);
     }
 
-    // If the failure is clearly a format issue, give fewer points.
-    final String msg = result.message.toLowerCase();
-    final bool looksLikeWffFailure =
-        msg.contains('wff') || msg.contains('well-formed') || msg.contains('formula');
+    // Valid proof: add rule reward from the last line (conclusion line).
+    final lastLine = path.proofLines.last;
+    final reward = InferenceRuleRewards.getReward(lastLine.rule);
 
-    final int lines = path.proofLines.length;
-    final int raw = looksLikeWffFailure ? (lines * 2) : (lines * 5);
-
-    // Cap fallback so it never beats a valid clear.
-    return raw.clamp(0, 30);
+    return (baseChips + reward.ruleChips, 1 + reward.ruleMult);
   }
 }

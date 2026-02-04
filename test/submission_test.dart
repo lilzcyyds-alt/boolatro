@@ -34,7 +34,8 @@ void main() {
       // First submission
       runState.submitProof();
       expect(runState.proofState.sessionSubmitted, isTrue);
-      expect(runState.proofState.editorOpen, isFalse); 
+      // Note: editorOpen stays true for 2 seconds while showing validation popup
+      expect(runState.proofState.showingValidationPopup, isTrue);
 
       // Try second submission (should be blocked by sessionSubmitted flag)
       final result2 = runState.submitProof();

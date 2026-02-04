@@ -3,8 +3,9 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, PaintingStyle;
 import '../../boolatro_component.dart';
 import '../../styles.dart';
-import '../action_panel.dart';
+import '../game_button.dart';
 import '../../boolatro_game.dart';
+import '../../utils/logger.dart';
 // import '../../../state/run_state.dart';
 
 class ShopStageComponent extends BoolatroComponent {
@@ -101,7 +102,7 @@ class ShopItemComponent extends PositionComponent with HasGameRef<BoolatroGame> 
       try {
         _sprite = await game.loadSprite(path);
       } catch (e) {
-        print('Error loading shop item sprite: $path - $e');
+        Log.e('Error loading shop item sprite: $path', error: e);
       }
     }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'utils/logger.dart';
 import 'systems/blind_system.dart';
 import 'systems/card_system.dart';
 
@@ -27,7 +28,7 @@ class GameConfig {
       await CardSystem.load();
       
     } catch (e) {
-      print('Error loading GameConfig: $e');
+      Log.e('Error loading GameConfig', error: e);
       // Fallback values
       initialHands = 3;
       initialDiscards = 3;

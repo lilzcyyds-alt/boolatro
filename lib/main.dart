@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'game/game_config.dart';
+import 'game/utils/logger.dart';
 import 'screens/game_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Log.i('Starting Boolatro...');
   await GameConfig.load();
   runApp(const BoolatroApp());
 }

@@ -78,6 +78,26 @@ class RunState extends ChangeNotifier {
   }
 
   bool _cashoutPending = false;
+  bool _showRunInfo = false;
+  bool _showOptions = false;
+
+  bool get showRunInfo => _showRunInfo;
+  set showRunInfo(bool value) {
+    _showRunInfo = value;
+    notifyListeners();
+  }
+
+  bool get showOptions => _showOptions;
+  set showOptions(bool value) {
+    _showOptions = value;
+    notifyListeners();
+  }
+
+  void giveUp() {
+    _phase = GamePhase.defeat;
+    _showOptions = false;
+    notifyListeners();
+  }
 
   void advancePhase() {
     final oldPhase = _phase;
@@ -128,6 +148,7 @@ class RunState extends ChangeNotifier {
   void addConclusionCard(PlayCard card) {
     if (_proofState.editorOpen) return;
     _proofState.addConclusionCard(card);
+    _updateScoreBreakdown();
     notifyListeners();
   }
 
@@ -140,23 +161,27 @@ class RunState extends ChangeNotifier {
   void reorderConclusionTokens(int oldIndex, int newIndex) {
     if (_proofState.editorOpen) return;
     _proofState.reorderConclusionTokens(oldIndex, newIndex);
+    _updateScoreBreakdown();
     notifyListeners();
   }
 
   void removeLastConclusionCard() {
     if (_proofState.editorOpen) return;
     _proofState.removeLastConclusionCard();
+    _updateScoreBreakdown();
     notifyListeners();
   }
 
   void removeConclusionCardAt(int index) {
     if (_proofState.editorOpen) return;
     _proofState.removeConclusionCardAt(index);
+    _updateScoreBreakdown();
     notifyListeners();
   }
 
   void clearConclusion() {
     _proofState.clearConclusion();
+    _updateScoreBreakdown();
     notifyListeners();
   }
 
@@ -176,17 +201,20 @@ class RunState extends ChangeNotifier {
       // Always ensure we have a fresh state for this proof attempt
       // Clear all proof lines from previous attempts
       _proofState.proofLines.clear();
-      _proofState.addProofLine(
+        _proofState.addProofLine(
         isFixed: true,
         sentence: _proofState.conclusionText,
       );
 
+      _updateScoreBreakdown();
       notifyListeners();
     }
   }
 
   void closeProofEditor() {
     _proofState.editorOpen = false;
+    _proofState.currentChips = 0;
+    _proofState.currentMult = 1;
     _proofState.conclusionTokens.clear(); // Clear the cards used in the conclusion
     _proofState.refillHand();
     _proofState.step = EditorStep.idle;
@@ -278,6 +306,7 @@ class RunState extends ChangeNotifier {
         _proofState.selectedSources.clear();
         _proofState.activeLineId = null;
 
+        _updateScoreBreakdown();
         submitProof();
         return;
       }
@@ -308,6 +337,8 @@ class RunState extends ChangeNotifier {
       _proofState.pendingRule = null;
       _proofState.selectedSources.clear();
       _proofState.activeLineId = null;
+
+      _updateScoreBreakdown();
     }
     
     notifyListeners();
@@ -360,11 +391,11 @@ class RunState extends ChangeNotifier {
 
     final result = ProofValidator.validateProofPath(proofPath);
 
+    // Ensure our breakdown is up to date before finalizing the score.
+    _updateScoreBreakdown();
 
-    // Phase 3 settlement: valid / baseScore / fallbackScore.
-    var delta = result.isValid
-        ? ProofScoring.baseScore(proofPath)
-        : ProofScoring.fallbackScore(proofPath, result);
+    // Phase 3 settlement: chips x mult.
+    var delta = _proofState.currentChips * _proofState.currentMult;
 
     // Phase 4 baseline: apply owned SpecialCard effects.
     final patch = _effectEngine.computePatch(
@@ -408,11 +439,43 @@ class RunState extends ChangeNotifier {
 
     Future.delayed(const Duration(seconds: 2), () {
       _proofState.showingValidationPopup = false;
+      _proofState.currentChips = 0;
+      _proofState.currentMult = 1;
       _proofState.isClosing = true;
       notifyListeners();
     });
 
     return result;
+  }
+
+  void _updateScoreBreakdown() {
+    if (_proofState.sessionSubmitted) return;
+
+    final proofLines = _proofState.proofLines
+        .map(
+          (draft) => ProofLine(
+            sentence: draft.sentence,
+            rule: draft.rule,
+            citationsRaw: draft.citations,
+          ),
+        )
+        .toList();
+
+    final proofPath = ProofPath(
+      premise: _proofState.premise,
+      conclusion: _proofState.conclusionText,
+      proofLines: proofLines,
+    );
+
+    final result = ProofValidator.validateProofPath(proofPath);
+    final (chips, mult) = ProofScoring.calculateBreakdown(
+      _proofState.conclusionTokens.length,
+      proofPath,
+      result.isValid,
+    );
+
+    _proofState.currentChips = chips;
+    _proofState.currentMult = mult;
   }
 
   void _startBlind({bool resetBlind = false, BlindConfig? config}) {
@@ -435,6 +498,8 @@ class RunState extends ChangeNotifier {
       _proofState.resetToGlobalDefaults(ante: _currentAnte);
       _proofState.startNewTask();
     }
+
+    _updateScoreBreakdown();
 
     // Clear the global position cache to prevent stale component inheritance
     LogicCardComponent.clearCache();

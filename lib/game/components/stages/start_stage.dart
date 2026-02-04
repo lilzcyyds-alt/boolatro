@@ -5,7 +5,7 @@ import 'package:flutter/material.dart'
     show Colors, Offset, Shadow, TextStyle, FontWeight;
 import '../../boolatro_component.dart';
 import '../../styles.dart';
-import '../action_panel.dart';
+import '../game_button.dart';
 
 class StartStageComponent extends BoolatroComponent {
   late final BoolatroTextComponent titleText;

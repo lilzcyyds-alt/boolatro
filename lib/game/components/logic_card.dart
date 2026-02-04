@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, Painti
 import '../boolatro_component.dart';
 import '../styles.dart';
 import '../boolatro_game.dart';
+import '../utils/logger.dart';
 import '../../boolatro/proof_core/play_card.dart';
 import 'hand.dart';
 import 'stages/proof_stage.dart';
@@ -58,7 +59,7 @@ class LogicCardComponent extends PositionComponent with TapCallbacks, DragCallba
       try {
         _sprite = await game.loadSprite(path);
       } catch (e) {
-        print('Error loading sprite: $path - $e');
+        Log.e('Error loading sprite: $path', error: e);
       }
     }
   }

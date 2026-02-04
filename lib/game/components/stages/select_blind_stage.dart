@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, PaintingStyle, TextStyle, FontWeight;
 import '../../boolatro_component.dart';
+import '../../utils/logger.dart';
 import '../../styles.dart';
 import '../../systems/blind_system.dart';
 
@@ -137,7 +138,7 @@ class BlindCardComponent extends BoolatroComponent {
       color: Colors.orange.shade900,
       textColor: Colors.white,
       onPressed: () {
-        print('[BlindCardComponent] Skip button pressed for: ${config.name}');
+        Log.i('[BlindCardComponent] Skipped blind: ${config.name}');
         onSkip();
       },
     )
@@ -322,7 +323,7 @@ class BlindActionButton extends BoolatroComponent with TapCallbacks {
   @override
   void onTapDown(TapDownEvent event) {
     if (!isEffectivelyVisible) return;
-    print('[BlindActionButton] Tapped: $label');
+    Log.i('User tapped action button: $label');
     onPressed();
   }
 }

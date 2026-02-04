@@ -6,6 +6,7 @@ import '../../state/run_state.dart';
 import '../../boolatro/effects/effects.dart';
 import '../styles.dart';
 import '../boolatro_game.dart';
+import '../utils/logger.dart';
 
 class JokerRowComponent extends BoolatroComponent {
   final Map<int, JokerCardComponent> _jokerMap = {};
@@ -116,7 +117,7 @@ class JokerCardComponent extends PositionComponent with Flyable, HasGameRef<Bool
       try {
         _sprite = await game.loadSprite(path);
       } catch (e) {
-        print('Error loading joker sprite: $path - $e');
+        Log.e('Error loading joker sprite: $path', error: e);
       }
     }
 

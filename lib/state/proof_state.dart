@@ -46,6 +46,10 @@ class ProofState {
   int blindScore = 0;
   int discardsRemaining = GameConfig.initialDiscards;
 
+  /// Current proof breakdown.
+  int currentChips = 0;
+  int currentMult = 1;
+
   bool editorOpen = false;
   Offset? initialEditorPos;
   String? lastValidationMessage;

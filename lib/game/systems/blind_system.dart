@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import '../utils/logger.dart';
 
 class BlindConfig {
   final String id;
@@ -42,7 +43,7 @@ class BlindSystem {
       _blinds.clear();
       _blinds.addAll(data.map((json) => BlindConfig.fromJson(json)).toList());
     } catch (e) {
-      print('Error loading blinds.json: $e');
+      Log.e('Error loading blinds.json', error: e);
       // Fallback or empty list
     }
   }

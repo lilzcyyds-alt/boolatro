@@ -1,10 +1,9 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:flame/text.dart';
-import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, PaintingStyle, FontWeight, TextStyle;
+import 'package:flutter/material.dart' show Colors, Paint, RRect, Radius, PaintingStyle;
 import '../../boolatro_component.dart';
 import '../../styles.dart';
-import '../action_panel.dart';
+import '../game_button.dart';
 
 class CashoutStageComponent extends BoolatroComponent {
   late final TextComponent scoreText;

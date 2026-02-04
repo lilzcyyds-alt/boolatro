@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
+import '../utils/logger.dart';
 
 class CardConfig {
   final String id;
@@ -46,7 +47,7 @@ class CardSystem {
       _cards.clear();
       _cards.addAll(data.map((json) => CardConfig.fromJson(json)).toList());
     } catch (e) {
-      print('Error loading cards.json: $e');
+      Log.e('Error loading cards.json', error: e);
     }
   }
 
