@@ -41,6 +41,10 @@ fi
 flutter pub get
 
 # Build web release
-flutter build web --release
+GIT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo dev)"
+BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%MZ")"
+flutter build web --release \
+  --dart-define=GIT_SHA="$GIT_SHA" \
+  --dart-define=BUILD_TIME="$BUILD_TIME"
 
 echo "[vercel_build] Build output: $PWD/build/web"
