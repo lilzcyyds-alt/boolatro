@@ -102,8 +102,11 @@ class RootLayoutComponent extends BoolatroComponent {
         scoringPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
         actionPanel.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
         hand.flyTo(UIConfig.getRandomOffscreenPosition(), isVisibleBefore: true, isVisibleAfter: false);
+        
+        // Ensure stage is visible and at target position for start/defeat screens
+        stage.flyTo(targetStagePos, isVisibleBefore: true, isVisibleAfter: true);
+        
         // editorContainer is now handled entirely by Flutter overlay - keep it hidden
-        // Stage stays at 0,0 but its children might hide.
       } else if (isEditorOpen) {
         // Editor is opening: stage, actionPanel, hand fly out.
         // editorContainer is now handled entirely by Flutter overlay - keep it hidden
