@@ -19,6 +19,24 @@ export PATH="$FLUTTER_DIR/bin:$PATH"
 flutter --version
 flutter config --enable-web
 
+# Ensure Git LFS assets are present (Vercel's git checkout may contain LFS pointers only)
+if command -v git-lfs >/dev/null 2>&1; then
+  echo "[vercel_build] git-lfs already installed"
+else
+  echo "[vercel_build] Installing git-lfs (apt)"
+  if command -v apt-get >/dev/null 2>&1; then
+    apt-get update -y
+    apt-get install -y git-lfs
+  else
+    echo "[vercel_build] WARNING: apt-get not available; skipping git-lfs install"
+  fi
+fi
+
+if command -v git-lfs >/dev/null 2>&1; then
+  git lfs install --local || true
+  git lfs pull || true
+fi
+
 # Fetch deps
 flutter pub get
 
